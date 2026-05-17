@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="../styles/style.css">
+  <meta charset="UTF-8">
+  <title>Добавление блюда</title>
+</head>
+<body>
+    <header>
+    <h1>MunchCrunch</h1>
+
+    <nav>
+        <a href="menu.html">Меню</a>
+        <a href="cart.html">Корзина</a>
+        <a href="orders.html">Заказы</a>
+        <a href="profile.html">Профиль</a>
+    </nav>
+</header>
+
+<main class="container">
+  <h1 class="page-title">Добавить блюдо</h1>
+
+  <div class="card">
+    <input id="name" placeholder="Название">
+    <input id="description" placeholder="Описание">
+    <input id="price" type="number" placeholder="Цена">
+    <input id="category" type="number" placeholder="ID категории">
+
+    <div class="actions">
+      <button id="create-dish" type="button">Добавить</button>
+      <button id="clear-dish" class="secondary" type="button">Очистить</button>
+    </div>
+  </div>
+</main>
+
+<script src="../js/config.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/add-dish.js"></script>
+
+</body>
+</html>

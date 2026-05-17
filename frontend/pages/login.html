@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Вход</title>
+  <link rel="stylesheet" href="../styles/style.css">
+</head>
+<body>
+
+  <header>
+    <h1>MunchCrunch</h1>
+    <nav>
+      <a href="menu.html">Menu</a>
+      <a href="cart.html">Корзина</a>
+      <a href="orders.html">Заказы</a>
+      <a href="profile.html">Профиль</a>
+    </nav>
+  </header>
+
+  <main class="container center">
+    <h1 class="page-title">Авторизация</h1>
+    
+    <div class="toolbar" style="flex-direction: column; gap: 15px; align-items: flex-start; max-width: 300px; margin: 0 auto;">
+      <input
+        type="text"
+        id="phone"
+        placeholder="Телефон"
+        style="width: 100%; padding: 8px; box-sizing: border-box;"
+      />
+
+      <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
+        <input type="checkbox" id="isStaff">
+        Войти как сотрудник
+      </label>
+
+      <button id="login-btn" onclick="login()" class="secondary" type="button" style="width: 100%;">
+        Войти
+      </button>
+    </div>
+  </main>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/login.js"></script>
+
+
+</body>
+</html>

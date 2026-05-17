@@ -1,0 +1,150 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    color: #222;
+}
+
+main {
+    display: block;
+}
+
+header {
+    background: #222;
+    color: white;
+    padding: 15px 30px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    margin-left: 15px;
+}
+
+nav a:hover {
+    text-decoration: underline;
+}
+
+.container {
+    width: 90%;
+    max-width: 1100px;
+    margin: 30px auto;
+}
+
+h1 {
+    font-size: 24px;
+    margin: 24px 0 16px;
+}
+
+.page-title {
+    margin: 0 0 16px;
+}
+
+.card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.card h3 {
+    margin-top: 0;
+}
+
+button {
+    background: #222;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+button.secondary {
+    background: #e6e6e6;
+    color: #222;
+}
+
+button.secondary:hover {
+    background: #d9d9d9;
+}
+button:hover {
+    background: #444;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.status {
+    display: inline-block;
+    padding: 5px 10px;
+    background: #ddd;
+    border-radius: 6px;
+    margin-top: 10px;
+}
+
+.center {
+    text-align: center;
+}
+
+.notice {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    padding: 12px 16px;
+    background: #222;
+    color: #fff;
+}
+
+.notice--hidden {
+    display: none;
+}
+
+.notice--info {
+    background: #222;
+}
+
+.notice--success {
+    background: #176b2c;
+}
+
+.notice--error {
+    background: #8d1e1e;
+}
+
+.toolbar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 0 0 16px;
+}
+
+.muted {
+    color: #666;
+}
