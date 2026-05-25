@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 
+const DatabaseAdapter = require('./adapters/DatabaseAdapter');
 const OrderFacade = require('./facades/OrderFacade');
 const MenuFacade = require('./facades/MenuFacade');
 const StaffFacade = require('./facades/StaffFacade');
@@ -125,7 +126,52 @@ app.post('/api/dishes', async (req, res) => {
     res.status(status).json({ error: e.message });
   }
 });
-    
+
+app.get('/api/users/:userId', async (req, res) => {
+  try {
+    const user = await DatabaseAdapter.getUserById(req.params.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Пользователь не найден' });
+    }
+    res.json(user);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Скрыть/показать блюдо
+app.patch('/api/dishes/:dishId/availability', async (req, res) => {
+  try {
+    const { dishId } = req.params;
+    const { isAvailable } = req.body;
+    const dish = await DatabaseAdapter.updateDishAvailability(dishId, isAvailable);
+    res.json(dish);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Получить все категории (для формы добавления)
+app.get('/api/categories', async (req, res) => {
+  try {
+    const categories = await DatabaseAdapter.getCategories();
+    res.json(categories);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Получить все блюда для сотрудника (включая скрытые)
+// Получить все блюда для сотрудника (включая скрытые)
+app.get('/api/menu/all', async (req, res) => {
+  try {
+    const dishes = await DatabaseAdapter.getAllDishes();
+    res.json(dishes);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.listen(3000, () => {
   console.log('Server started on port 3000');
 });

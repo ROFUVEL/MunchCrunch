@@ -14,6 +14,11 @@ async function login() {
       showNotice('Введите номер телефона', 'error');
       return;
     }
+    
+    if (!/^\d+$/.test(phone)) {
+      showNotice('Номер телефона должен состоять только из цифр', 'error');
+      return;
+    }
 
     const res = await fetch(
       `${API_URL}/login`,

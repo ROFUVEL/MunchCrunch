@@ -1,31 +1,68 @@
-const userId = localStorage.getItem('userId');
-const role = localStorage.getItem('role');
-const div = document.getElementById('profile');
-const branchId = localStorage.getItem('branchId');
+const API_URL = getApiUrl();
 
-if (!div) return;
+async function loadProfile() {
+  const userId = localStorage.getItem('userId');
+  const role = localStorage.getItem('role');
+  
+  if (!userId) {
+    window.location.href = 'login.html';
+    return;
+  }
+  
+  try {
+    const res = await fetch(`${API_URL}/users/${userId}`);
+    if (!res.ok) throw new Error('Ошибка загрузки');
+    
+    const user = await res.json();
+    renderProfile(user);
+  } catch (e) {
+    renderProfile({
+      id: userId,
+      phone: localStorage.getItem('userPhone') || 'Не указан',
+      role: role
+    });
+  }
+}
 
-if (!userId) {
-  div.innerHTML = `
+function renderProfile(user) {
+  const container = document.getElementById('profile');
+  if (!container) return;
+  
+  const isStaff = user.role === 'staff';
+  
+  container.innerHTML = `
     <div class="card">
-      <p>Вы не авторизованы</p>
-      <button type="button" onclick="location.href='login.html'">Войти</button>
-    </div>
-  `;
-} else {
-  div.innerHTML = `
-    <div class="card">
-      <p><strong>ID:</strong> ${userId}</p>
-      <p><strong>Роль:</strong> ${role || '—'}</p>
-      <p><strong>Точка:</strong> ${branchId || 'не выбрана'}</p>
-      <div class="actions">
-        <button type="button" onclick="logout()">Выйти</button>
+      <h3>Информация о пользователе</h3>
+      <p><strong>Телефон:</strong> ${user.phone}</p>
+      <p><strong>Роль:</strong> ${isStaff ? 'Сотрудник' : 'Клиент'}</p>
+      ${user.branch_id ? `<p><strong>Филиал:</strong> ${user.branch_id}</p>` : ''}
+      
+      <div class="actions" style="margin-top: 20px;">
+        ${!isStaff ? '<button id="view-orders-btn" class="secondary">Мои заказы</button>' : ''}
+        <button id="logout-btn" style="background: #8d1e1e;">Выйти</button>
       </div>
     </div>
   `;
+  
+  if (!isStaff) {
+    const ordersBtn = document.getElementById('view-orders-btn');
+    if (ordersBtn) {
+      ordersBtn.addEventListener('click', () => {
+        window.location.href = 'orders.html';
+      });
+    }
+  }
+  
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', logout);
+  }
 }
+
 function logout() {
-localStorage.clear();
-showNotice('Вы вышли', 'success');
-window.location.href = 'login.html';
+  localStorage.clear();
+  showNotice('Вы вышли из системы', 'success');
+  window.location.href = 'login.html';
 }
+
+loadProfile();

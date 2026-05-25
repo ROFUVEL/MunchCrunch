@@ -1,33 +1,43 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+  <title>Корзина - MunchCrunch</title>
   <meta charset="UTF-8">
-  <title>Корзина</title>
   <link rel="stylesheet" href="../styles/style.css">
+  <style>
+    .header-title {
+        flex-grow: 1;
+        text-align: center;
+        margin: 0;
+        font-size: 24px;
+    }
+    nav {
+        display: flex;
+        gap: 15px;
+    }
+  </style>
 </head>
 <body>
 
+  <div id="notice" class="notice notice--hidden"></div>
+
   <header>
     <h1>MunchCrunch</h1>
-
+    <h1 class="header-title">Корзина</h1>  <!-- ← ВОТ ЭТО ДОБАВИТЬ -->
     <nav>
       <a href="menu.html">Меню</a>
-      <a href="cart.html">Корзина</a>
-      <a href="orders.html">Заказы</a>
+      <a href="cart.html" class="muted">Корзина</a>
+      <a href="branches.html">Рестораны</a>
       <a href="profile.html">Профиль</a>
     </nav>
   </header>
 
-  <main class="container">
-    <h1 class="page-title">Корзина</h1>
-    <div class="toolbar">
-      <button id="go-branches" class="secondary" type="button">Выбрать точку</button>
-      <button id="go-menu" class="secondary" type="button">Меню</button>
-    </div>
-
-    <div id="cart"></div>
-    <div id="total"></div>
-  </main>
+<main class="container">
+  <div id="selected-branch-info" class="card" style="margin-bottom: 20px;"></div>
+  
+  <div id="cart"></div>
+  <div id="total"></div>
+</main>
 
   <script src="../js/config.js"></script>
   <script src="../js/ui.js"></script>

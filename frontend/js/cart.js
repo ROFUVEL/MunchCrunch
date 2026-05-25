@@ -1,3 +1,59 @@
+const API_URL = getApiUrl();
+
+// === ЗАГРУЗКА ИНФОРМАЦИИ О ТОЧКЕ ===
+async function loadSelectedBranch() {
+  const branchId = localStorage.getItem('branchId');
+  const branchInfoDiv = document.getElementById('selected-branch-info');
+  
+  if (!branchInfoDiv) return;
+  
+  if (!branchId) {
+    branchInfoDiv.innerHTML = `
+        <strong>Точка не выбрана</strong>
+        <p style="margin: 10px 0 0 0;">Пожалуйста, выберите ресторан для оформления заказа.</p>
+        <button onclick="window.location.href='branches.html'" style="margin-top: 10px;">Выбрать точку</button>
+      </div>
+    `;
+    return;
+  }
+  
+  try {
+    const res = await fetch(`${API_URL}/branches`);
+    const branches = await res.json();
+    const branch = branches.find(b => b.id === Number(branchId));
+    
+    if (branch) {
+      branchInfoDiv.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: start; gap: 20px; flex-wrap: wrap;">
+          <div style="flex: 2;">
+            <h3 style="margin: 0 0 8px 0;">Выбранная точка</h3>
+            <p style="margin: 5px 0;"><strong>${branch.name}</strong></p>
+            <p style="margin: 5px 0; color: #666;">${branch.address}</p>
+            <p style="margin: 5px 0; color: #666;">${branch.working_hours || 'Часы работы не указаны'}</p>
+          </div>
+          <div style="flex: 1; text-align: right;">
+            <button onclick="window.location.href='branches.html'" class="secondary">Изменить точку</button>
+          </div>
+        </div>
+      `;
+    } else {
+      branchInfoDiv.innerHTML = `
+        <div style="background: #ffebee; border: 1px solid #f44336; border-radius: 8px; padding: 15px;">
+          <strong>Выбранная точка не найдена</strong>
+          <button onclick="window.location.href='branches.html'" style="margin-top: 10px;">Выбрать точку заново</button>
+        </div>
+      `;
+    }
+  } catch (e) {
+    console.error('Ошибка загрузки точки:', e);
+    branchInfoDiv.innerHTML = `
+      <div style="background: #ffebee; border: 1px solid #f44336; border-radius: 8px; padding: 15px;">
+        Ошибка загрузки информации о точке
+      </div>
+    `;
+  }
+}
+
 function getCart() {
   return JSON.parse(localStorage.getItem('cart')) || [];
 }
@@ -8,13 +64,12 @@ function saveCart(cart) {
 
 function renderCart() {
   const cart = getCart();
-
   const cartDiv = document.getElementById('cart');
   const totalDiv = document.getElementById('total');
+  
   if (!cartDiv || !totalDiv) return;
 
   cartDiv.innerHTML = '';
-
   let total = 0;
 
   if (cart.length === 0) {
@@ -28,7 +83,6 @@ function renderCart() {
 
     const el = document.createElement('div');
     el.className = 'card';
-
     el.innerHTML = `
       <h3>${item.name}</h3>
       <p>${item.price} ₽</p>
@@ -50,7 +104,6 @@ function renderCart() {
     el.appendChild(plus);
     el.appendChild(minus);
     el.appendChild(del);
-
     cartDiv.appendChild(el);
   });
 
@@ -62,13 +115,12 @@ function renderCart() {
 
 function changeQty(index, delta) {
   let cart = getCart();
-
   cart[index].quantity += delta;
-
+  
   if (cart[index].quantity <= 0) {
     cart.splice(index, 1);
   }
-
+  
   saveCart(cart);
   renderCart();
 }
@@ -80,32 +132,41 @@ function removeItem(index) {
   renderCart();
 }
 
+// === ОФОРМЛЕНИЕ ЗАКАЗА ===
 async function checkout() {
   const cart = getCart();
+  const userId = localStorage.getItem('userId');
+  const branchId = localStorage.getItem('branchId');
 
   if (cart.length === 0) {
     showNotice('Корзина пуста', 'error');
     return;
   }
 
-  const userId = localStorage.getItem('userId');
-  const branchId = localStorage.getItem('branchId');
+  if (!userId) {
+    showNotice('Сначала войдите в систему', 'error');
+    window.location.href = 'login.html';
+    return;
+  }
 
-  if (!userId || !branchId) {
-    showNotice('Нужно выбрать точку и войти', 'error');
+  if (!branchId) {
+    showNotice('Сначала выберите ресторан', 'error');
+    window.location.href = 'branches.html';
     return;
   }
 
   try {
-    const res = await fetch(`${getApiUrl()}/orders`, {
+    const res = await fetch(`${API_URL}/orders`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        userId,
-        branchId,
-        items: cart
+        userId: Number(userId),
+        branchId: Number(branchId),
+        items: cart.map(item => ({
+          dishId: item.dishId,
+          quantity: item.quantity,
+          price: item.price
+        }))
       })
     });
 
@@ -120,26 +181,16 @@ async function checkout() {
     showNotice('Заказ оформлен', 'success');
     renderCart();
     window.location.href = 'orders.html';
+    
   } catch (e) {
     showNotice('Ошибка сети при оформлении заказа', 'error');
   }
 }
 
-function initCartPage() {
-  const goBranches = document.getElementById('go-branches');
-  if (goBranches) {
-    goBranches.addEventListener('click', () => {
-      window.location.href = 'branches.html';
-    });
-  }
-
-  const goMenu = document.getElementById('go-menu');
-  if (goMenu) {
-    goMenu.addEventListener('click', () => {
-      window.location.href = 'menu.html';
-    });
-  }
+// === ИНИЦИАЛИЗАЦИЯ ===
+async function initCartPage() {
+  await loadSelectedBranch();
+  renderCart();
 }
 
 initCartPage();
-renderCart();

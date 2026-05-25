@@ -1,48 +1,75 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+  <title>Авторизация - MunchCrunch</title>
   <meta charset="UTF-8">
-  <title>Вход</title>
   <link rel="stylesheet" href="../styles/style.css">
+  <style>
+    .header-title {
+        flex-grow: 1;
+        text-align: center;
+        margin: 0;
+        font-size: 24px;
+    }
+    .header-spacer {
+        width: 140px; 
+    }
+    .login-box {
+        max-width: 400px;
+        margin: 50px auto;
+    }
+    .big-input {
+        padding: 13px !important;
+        font-size: 16px;
+    }
+    .checkbox-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 25px;
+        white-space: nowrap; 
+        cursor: pointer;
+    }
+    .checkbox-container input[type="checkbox"] {
+        width: auto;
+        margin: 0;
+    }
+    .big-button {
+        width: 100%; 
+        font-size: 26px;
+        padding: 20px 32px;
+        border-radius: 12px;
+    }
+  </style>
 </head>
 <body>
 
+  <div id="notice" class="notice notice--hidden"></div>
+
   <header>
     <h1>MunchCrunch</h1>
-    <nav>
-      <a href="menu.html">Menu</a>
-      <a href="cart.html">Корзина</a>
-      <a href="orders.html">Заказы</a>
-      <a href="profile.html">Профиль</a>
-    </nav>
+    <h1 class="header-title">Авторизация</h1>
+    <div class="header-spacer"></div>
   </header>
 
-  <main class="container center">
-    <h1 class="page-title">Авторизация</h1>
-    
-    <div class="toolbar" style="flex-direction: column; gap: 15px; align-items: flex-start; max-width: 300px; margin: 0 auto;">
-      <input
-        type="text"
-        id="phone"
-        placeholder="Телефон"
-        style="width: 100%; padding: 8px; box-sizing: border-box;"
-      />
+  <main class="container">
+    <div class="card login-box center">
+      
+      <input type="text" id="phone" class="big-input" placeholder="Телефон" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
 
-      <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
+      <label class="checkbox-container">
         <input type="checkbox" id="isStaff">
-        Войти как сотрудник
+        <span>Войти как сотрудник</span>
       </label>
 
-      <button id="login-btn" onclick="login()" class="secondary" type="button" style="width: 100%;">
-        Войти
-      </button>
+      <button type="button" id="login-btn" class="big-button">Войти</button>
+
     </div>
   </main>
 
   <script src="../js/config.js"></script>
   <script src="../js/ui.js"></script>
   <script src="../js/login.js"></script>
-
 
 </body>
 </html>

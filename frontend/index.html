@@ -1,30 +1,43 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-  <title>Restaurant System</title>
+  <title>MunchCrunch</title>
   <meta charset="UTF-8">
   <link rel="stylesheet" href="styles/style.css">
+  <style>
+    .header-title {
+        flex-grow: 1;
+        text-align: center;
+        margin: 0;
+        font-size: 24px;
+    }
+    .header-spacer {
+        width: 140px; 
+    }
+    .center-actions {
+        justify-content: center;
+        gap: 20px;
+    }
+    .big-button {
+        font-size: 20px;
+        padding: 20px 32px;
+        border-radius: 12px;
+    }
+  </style>
 </head>
 <body>
 
   <header>
     <h1>MunchCrunch</h1>
-    <nav>
-      <a href="pages/menu.html">Меню</a>
-      <a href="pages/cart.html">Корзина</a>
-      <a href="pages/orders.html">Заказы</a>
-      <a href="pages/profile.html">Профиль</a>
-    </nav>
+    <h1 class="header-title">Добро пожаловать</h1>
+    <div class="header-spacer"></div>
   </header>
 
-  <main class="container center">
-    <h1 class="page-title">Добро пожаловать</h1>
-
-    <div class="card">
-      <div class="actions">
-        <button type="button" onclick="location.href='pages/menu.html'">Меню</button>
-        <button type="button" onclick="location.href='pages/cart.html'">Корзина</button>
-        <button type="button" onclick="location.href='pages/login.html'">Вход</button>
+  <main class="container">
+    <div class="card center">
+      <div class="actions center-actions">
+        <button type="button" class="big-button" onclick="location.href='pages/login.html'">Войти в аккаунт</button>
+        <button type="button" class="big-button" onclick="location.href='pages/menu.html'">Перейти в меню</button>
       </div>
     </div>
   </main>

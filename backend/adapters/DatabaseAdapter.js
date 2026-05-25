@@ -320,6 +320,21 @@ class DatabaseAdapter {
 
     return res.rows[0];
   }
+  
+async getAllDishes() {
+  const res = await pool.query(
+    `
+    SELECT
+      dishes.*,
+      categories.name AS category_name
+    FROM dishes
+    LEFT JOIN categories
+      ON dishes.category_id = categories.id
+    ORDER BY dishes.id
+    `
+  );
+  return res.rows;
+}
 }
 
 module.exports = new DatabaseAdapter();

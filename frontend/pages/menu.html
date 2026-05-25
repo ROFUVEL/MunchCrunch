@@ -1,36 +1,94 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-  <link rel="stylesheet" href="../styles/style.css">
+  <title>Меню - MunchCrunch</title>
   <meta charset="UTF-8">
-  <title>Меню</title>
+  <link rel="stylesheet" href="../styles/style.css">
+  <style>
+    .header-title {
+        flex-grow: 1;
+        text-align: center;
+        margin: 0;
+        font-size: 24px;
+    }
+    nav {
+        display: flex;
+        gap: 15px;
+    }
+    
+    /* Скролл-контейнер для категорий */
+    .categories-bar {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 24px;
+        overflow-x: auto; /* Разрешаем скролл по горизонтали */
+        scroll-behavior: smooth;
+        padding-bottom: 8px; /* Зазор снизу */
+        
+        /* Скрываем полосу прокрутки во всех браузерах */
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Firefox */
+    }
+    .categories-bar::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, Opera */
+    }
+    
+    .category-btn {
+        background: #e6e6e6;
+        color: #222;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        transition: background 0.2s;
+        margin: 0;
+        white-space: nowrap; /* Текст кнопок не переносится */
+        flex-shrink: 0; /* Кнопки не сжимаются */
+    }
+    .category-btn.active {
+        background: #222;
+        color: #fff;
+    }
+    .category-btn:hover {
+        background: #d9d9d9;
+    }
+    .category-btn.active:hover {
+        background: #444;
+    }
+  </style>
 </head>
 <body>
+
+  <!-- Уведомления для плашек от ui.js -->
+  <div id="notice" class="notice notice--hidden"></div>
+
+  <!-- Обновленная шапка в меню -->
   <header>
     <h1>MunchCrunch</h1>
-
+    <h1 class="header-title">Меню</h1>
     <nav>
-        <a href="menu.html">Меню</a>
-        <a href="cart.html">Корзина</a>
-        <a href="orders.html">Заказы</a>
-        <a href="profile.html">Профиль</a>
+      <a href="menu.html" class="muted">Меню</a>
+      <a href="cart.html">Корзина</a>
+      <a href="branches.html">Рестораны</a> <!-- Поменяли тут -->
+      <a href="profile.html">Профиль</a>
     </nav>
-</header>
+  </header>
 
-<main class="container">
-  <h1 class="page-title">Меню</h1>
+  <main class="container">
+    
+    <!-- Сюда JS-скрипт автоматически вставит кнопки категорий из PostgreSQL -->
+    <div id="categories" class="categories-bar"></div>
 
-  <div class="toolbar">
-    <button id="go-branches" class="secondary" type="button">Выбрать точку</button>
-    <button id="go-cart" type="button">Корзина</button>
-  </div>
+    <!-- Сюда JS-скрипт загрузит карточки блюд -->
+    <div id="menu"></div>
 
-  <div id="menu"></div>
-</main>
+  </main>
 
-<script src="../js/config.js"></script>
-<script src="../js/ui.js"></script>
-<script src="../js/menu.js"></script>
-
+  <!-- Подключение скриптов -->
+  <script src="../js/config.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/menu.js"></script>
 </body>
 </html>
