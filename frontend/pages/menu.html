@@ -16,7 +16,6 @@
         gap: 15px;
     }
     
-    /* Скролл-контейнер для категорий */
     .categories-bar {
         display: flex;
         gap: 12px;
@@ -24,8 +23,6 @@
         overflow-x: auto;
         scroll-behavior: smooth;
         padding-bottom: 8px;
-        
-        /* Скрываем полосу прокрутки */
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
     }
@@ -42,7 +39,6 @@
         cursor: pointer;
         font-size: 16px;
         font-weight: bold;
-        transition: background 0.2s;
         margin: 0;
         white-space: nowrap;
         flex-shrink: 0;
@@ -51,21 +47,6 @@
         background: #222;
         color: #fff;
     }
-    .category-btn:hover {
-        background: #d9d9d9;
-    }
-    .category-btn.active:hover {
-        background: #444;
-    }
-    
-    /* Карточки блюд */
-    .card {
-        transition: transform 0.2s;
-    }
-    .card:hover {
-        transform: translateY(-2px);
-    }
-    
     .actions button {
         margin-right: 8px;
     }
@@ -77,10 +58,8 @@
 </head>
 <body>
 
-  <!-- Уведомления -->
   <div id="notice" class="notice notice--hidden"></div>
 
-  <!-- Шапка -->
   <header>
     <h1>MunchCrunch</h1>
     <h1 class="header-title">Меню</h1>
@@ -92,16 +71,12 @@
     </nav>
   </header>
 
-  <!-- Основной контент -->
   <main class="container">
-    <!-- Кнопки категорий (динамически из БД) -->
     <div id="categories" class="categories-bar"></div>
 
-    <!-- Список блюд -->
     <div id="menu"></div>
   </main>
 
-  <!-- Подключение скриптов -->
   <script src="../js/config.js"></script>
   <script src="../js/ui.js"></script>
   <script src="../js/menu.js"></script>
