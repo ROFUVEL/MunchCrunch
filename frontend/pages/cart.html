@@ -15,11 +15,6 @@
         display: flex;
         gap: 15px;
     }
-    .cart-empty {
-        text-align: center;
-        padding: 40px;
-        color: #666;
-    }
     .checkout-btn {
         width: 100%;
         padding: 15px;
@@ -31,23 +26,12 @@
         cursor: pointer;
         margin-top: 20px;
     }
-    .checkout-btn:hover {
-        background: #444;
-    }
-    .total-section {
-        text-align: right;
-        margin-top: 20px;
-        padding-top: 20px;
-        border-top: 2px solid #eee;
-    }
   </style>
 </head>
 <body>
 
-  <!-- Уведомления -->
   <div id="notice" class="notice notice--hidden"></div>
 
-  <!-- Шапка -->
   <header>
     <h1>MunchCrunch</h1>
     <h1 class="header-title">Корзина</h1>
@@ -59,19 +43,14 @@
     </nav>
   </header>
 
-  <!-- Основной контент -->
   <main class="container">
-    <!-- Информация о выбранной точке -->
     <div id="selected-branch-info" class="card" style="margin-bottom: 20px;"></div>
-    
-    <!-- Список товаров в корзине -->
+
     <div id="cart"></div>
-    
-    <!-- Итого и кнопка оформления -->
+
     <div id="total"></div>
   </main>
 
-  <!-- Подключение скриптов -->
   <script src="../js/config.js"></script>
   <script src="../js/ui.js"></script>
   <script src="../js/cart.js"></script>
