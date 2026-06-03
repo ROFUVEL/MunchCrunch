@@ -1,0 +1,17 @@
+@startuml
+left to right direction
+skinparam nodesep 40
+
+actor "Пользователь" as user
+boundary "Экран приветствия" as welcome_screen
+boundary "Экран меню" as menu_screen
+control "Перейти в меню без входа" as load_menu
+control "Ошибка бд" as error_db #red
+entity "DBFacade" as data_base
+
+user --> welcome_screen
+welcome_screen --> load_menu
+load_menu --> menu_screen
+load_menu --> data_base
+load_menu --> error_db
+@enduml

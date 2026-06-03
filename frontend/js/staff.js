@@ -1,7 +1,11 @@
 const API_URL = getApiUrl();
 
+function getAuthToken() {
+  return localStorage.getItem('sessionToken');
+}
+
 async function loadStaffOrders() {
-  const userId = localStorage.getItem('userId');
+  const token = getAuthToken();
   const role = localStorage.getItem('role');
   
   if (role !== 'staff') {
@@ -10,18 +14,27 @@ async function loadStaffOrders() {
     return;
   }
   
-  if (!userId) {
+  if (!token) {
     window.location.href = 'login.html';
     return;
   }
   
   try {
-    const res = await fetch(`${API_URL}/staff/orders/${userId}`);
-    if (!res.ok) throw new Error('Ошибка загрузки');
+    const res = await fetch(`${API_URL}/staff/orders`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.error || 'Ошибка загрузки');
+    }
     
     const orders = await res.json();
     renderOrders(orders);
   } catch (e) {
+    console.error('Ошибка:', e);
     showNotice(e.message, 'error');
   }
 }
@@ -45,14 +58,14 @@ function renderOrders(orders) {
       <p>Сумма: ${order.total_price} ₽</p>
       <p>Статус: <strong>${getStatusText(order.status)}</strong></p>
       <p>Дата: ${new Date(order.created_at).toLocaleString()}</p>
-      <select id="status-${order.id}" class="status-select">
+      <select id="status-${order.id}">
         <option value="created" ${order.status === 'created' ? 'selected' : ''}>Создан</option>
         <option value="cooking" ${order.status === 'cooking' ? 'selected' : ''}>Готовится</option>
         <option value="ready" ${order.status === 'ready' ? 'selected' : ''}>Готов</option>
         <option value="issued" ${order.status === 'issued' ? 'selected' : ''}>Выдан</option>
         <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Отменен</option>
       </select>
-      <button onclick="updateStatus(${order.id})">Обновить статус</button>
+      <button onclick="updateOrderStatus(${order.id})">Обновить статус</button>
     `;
     container.appendChild(el);
   });
@@ -69,24 +82,30 @@ function getStatusText(status) {
   return statuses[status] || status;
 }
 
-async function updateStatus(orderId) {
+async function updateOrderStatus(orderId) {
+  const token = getAuthToken();
   const select = document.getElementById(`status-${orderId}`);
   const status = select.value;
-  const userId = localStorage.getItem('userId');
   
   try {
-    const res = await fetch(`${API_URL}/staff/order-status`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, orderId, status })
+    const res = await fetch(`${API_URL}/orders/${orderId}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ status })
     });
     
-    if (!res.ok) throw new Error('Ошибка');
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.error || 'Ошибка');
+    }
     
     showNotice('Статус обновлен', 'success');
     loadStaffOrders();
   } catch (e) {
-    showNotice('Ошибка обновления', 'error');
+    showNotice(e.message, 'error');
   }
 }
 

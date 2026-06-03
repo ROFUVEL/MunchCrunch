@@ -1,0 +1,176 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #FFFFFF
+title Диаграмма классов (после доработок)
+
+' =========================
+' ADAPTER LAYER
+' =========================
+class DatabaseAdapter {
+  +getUserByPhone(phone)
+  +createClient(phone)
+  +getUserById(id)
+  +getStaffBranch(userId)
+
+  +getMenuByBranch(branchId)
+  +getAllDishesByBranch(branchId)
+  +createDishForAllBranches(dish)
+  +updateDishAvailabilityInBranch(dishId, branchId, isAvailable)
+  +getDishAvailabilityInBranch(dishId, branchId)
+
+  +getBranches()
+  +getCategories()
+
+  +createFullOrder(userId, branchId, items)
+  +getUserOrders(userId)
+  +getOrdersByBranch(branchId)
+  +getOrderById(orderId)
+  +updateOrderStatus(orderId, status)
+
+  +saveAuthCode(phone, code)
+  +verifyAuthCode(phone, code)
+  +createSession(userId, token)
+  +getSession(token)
+  +deleteSession(token)
+}
+
+' =========================
+' FACADE LAYER
+' =========================
+class AuthFacade {
+  +login(phone)
+  +getUserById(userId)
+}
+
+class MenuFacade {
+  +getMenu(branchId)
+  +getAllMenu(branchId)
+}
+
+class OrderFacade {
+  +createOrder(userId, branchId, items)
+  +getUserOrders(userId)
+  +updateOrderStatus(orderId, status, userId)
+  +cancelOrder(orderId, userId)
+}
+
+class StaffFacade {
+  +getMyOrders(userId)
+  +updateOrderStatus(userId, orderId, status)
+  +getStaffInfo(userId)
+  +getBranchStats(userId)
+}
+
+class BranchFacade {
+  +getBranches()
+  +getBranchById(branchId)
+}
+
+class DishFacade {
+  +createDish(userId, dishData)
+  +toggleAvailability(userId, dishId, isAvailable)
+}
+
+' =========================
+' RELATIONS (Facade -> Adapter)
+' =========================
+AuthFacade --> DatabaseAdapter
+MenuFacade --> DatabaseAdapter
+OrderFacade --> DatabaseAdapter
+StaffFacade --> DatabaseAdapter
+BranchFacade --> DatabaseAdapter
+DishFacade --> DatabaseAdapter
+
+' =========================
+' DOMAIN ENTITIES (DB TABLES)
+' =========================
+class User {
+  +id
+  +phone
+  +role
+  +branch_id
+  +created_at
+}
+
+class Branch {
+  +id
+  +name
+  +address
+  +working_hours
+}
+
+class Dish {
+  +id
+  +name
+  +description
+  +price
+  +category_id
+  +image_url
+}
+
+class Category {
+  +id
+  +name
+}
+
+class BranchDish {
+  +branch_id
+  +dish_id
+  +is_available
+  +price_override
+}
+
+class Order {
+  +id
+  +user_id
+  +branch_id
+  +status
+  +total_price
+  +created_at
+  +updated_at
+}
+
+class OrderItem {
+  +id
+  +order_id
+  +dish_id
+  +quantity
+  +price
+}
+
+class AuthCode {
+  +id
+  +phone
+  +code
+  +expires_at
+  +is_used
+}
+
+class Session {
+  +id
+  +user_id
+  +token
+  +expires_at
+}
+
+' =========================
+' RELATIONS (DB)
+' =========================
+User "1" --> "*" Order
+Order "1" --> "*" OrderItem
+OrderItem "*" --> "1" Dish
+Order "*" --> "1" Branch
+
+Branch "1" --> "*" BranchDish
+Dish "1" --> "*" BranchDish
+BranchDish "1" --> "1" Dish
+BranchDish "1" --> "1" Branch
+
+Category "1" --> "*" Dish
+
+User "1" --> "*" Session
+User "1" --> "*" AuthCode
+
+User "1" --> "1" Branch
+
+@enduml

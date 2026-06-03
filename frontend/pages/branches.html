@@ -6,27 +6,33 @@
   <title>Выбор точки</title>
 </head>
 <body>
+
+  <div id="notice" class="notice notice--hidden"></div>
+
   <header>
     <h1>MunchCrunch</h1>
-    <h1 class="header-title">Рестораны</h1> <!-- Поменяли заголовок -->
+    <h1 class="header-title">Рестораны</h1>
     <nav>
       <a href="menu.html">Меню</a>
       <a href="cart.html">Корзина</a>
-      <a href="branches.html" class="muted">Рестораны</a> <!-- Перенесли подсветку сюда -->
+      <a href="branches.html" class="muted">Рестораны</a>
       <a href="profile.html">Профиль</a>
     </nav>
   </header>
 
+  <main class="container">
+    <h1 class="page-title">Выберите точку</h1>
+    <div id="branches"></div>
+    
+    <div class="actions" style="margin-top: 20px;">
+      <button id="go-to-cart">Перейти в корзину</button>
+      <button id="logout-btn" class="secondary">Выйти</button>
+    </div>
+  </main>
 
-
-<main class="container">
-  <h1 class="page-title">Выберите точку</h1>
-  <div id="branches"></div>
-</main>
-
-<script src="../js/config.js"></script>
-<script src="../js/ui.js"></script>
-<script src="../js/branches.js"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/branches.js"></script>
 
 </body>
 </html>

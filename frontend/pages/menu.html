@@ -21,16 +21,16 @@
         display: flex;
         gap: 12px;
         margin-bottom: 24px;
-        overflow-x: auto; /* Разрешаем скролл по горизонтали */
+        overflow-x: auto;
         scroll-behavior: smooth;
-        padding-bottom: 8px; /* Зазор снизу */
+        padding-bottom: 8px;
         
-        /* Скрываем полосу прокрутки во всех браузерах */
+        /* Скрываем полосу прокрутки */
         -webkit-overflow-scrolling: touch;
-        scrollbar-width: none; /* Firefox */
+        scrollbar-width: none;
     }
     .categories-bar::-webkit-scrollbar {
-        display: none; /* Chrome, Safari, Opera */
+        display: none;
     }
     
     .category-btn {
@@ -44,8 +44,8 @@
         font-weight: bold;
         transition: background 0.2s;
         margin: 0;
-        white-space: nowrap; /* Текст кнопок не переносится */
-        flex-shrink: 0; /* Кнопки не сжимаются */
+        white-space: nowrap;
+        flex-shrink: 0;
     }
     .category-btn.active {
         background: #222;
@@ -57,38 +57,54 @@
     .category-btn.active:hover {
         background: #444;
     }
+    
+    /* Карточки блюд */
+    .card {
+        transition: transform 0.2s;
+    }
+    .card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .actions button {
+        margin-right: 8px;
+    }
+    
+    .muted {
+        color: #666;
+    }
   </style>
 </head>
 <body>
 
-  <!-- Уведомления для плашек от ui.js -->
+  <!-- Уведомления -->
   <div id="notice" class="notice notice--hidden"></div>
 
-  <!-- Обновленная шапка в меню -->
+  <!-- Шапка -->
   <header>
     <h1>MunchCrunch</h1>
     <h1 class="header-title">Меню</h1>
     <nav>
       <a href="menu.html" class="muted">Меню</a>
       <a href="cart.html">Корзина</a>
-      <a href="branches.html">Рестораны</a> <!-- Поменяли тут -->
+      <a href="branches.html">Рестораны</a>
       <a href="profile.html">Профиль</a>
     </nav>
   </header>
 
+  <!-- Основной контент -->
   <main class="container">
-    
-    <!-- Сюда JS-скрипт автоматически вставит кнопки категорий из PostgreSQL -->
+    <!-- Кнопки категорий (динамически из БД) -->
     <div id="categories" class="categories-bar"></div>
 
-    <!-- Сюда JS-скрипт загрузит карточки блюд -->
+    <!-- Список блюд -->
     <div id="menu"></div>
-
   </main>
 
   <!-- Подключение скриптов -->
   <script src="../js/config.js"></script>
   <script src="../js/ui.js"></script>
   <script src="../js/menu.js"></script>
+
 </body>
 </html>

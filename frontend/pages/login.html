@@ -11,9 +11,6 @@
         margin: 0;
         font-size: 24px;
     }
-    .header-spacer {
-        width: 140px; 
-    }
     .login-box {
         max-width: 400px;
         margin: 50px auto;
@@ -22,20 +19,8 @@
         padding: 13px !important;
         font-size: 16px;
     }
-    .checkbox-container {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 25px;
-        white-space: nowrap; 
-        cursor: pointer;
-    }
-    .checkbox-container input[type="checkbox"] {
-        width: auto;
-        margin: 0;
-    }
     .big-button {
-        width: 100%; 
+        width: 100%;
         font-size: 26px;
         padding: 20px 32px;
         border-radius: 12px;
@@ -49,21 +34,13 @@
   <header>
     <h1>MunchCrunch</h1>
     <h1 class="header-title">Авторизация</h1>
-    <div class="header-spacer"></div>
   </header>
 
   <main class="container">
     <div class="card login-box center">
-      
-      <input type="text" id="phone" class="big-input" placeholder="Телефон" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-
-      <label class="checkbox-container">
-        <input type="checkbox" id="isStaff">
-        <span>Войти как сотрудник</span>
-      </label>
-
+      <input type="text" id="phone" class="big-input" placeholder="Телефон" maxlength="11" 
+             oninput="this.value = this.value.replace(/[^0-9]/g, '')">
       <button type="button" id="login-btn" class="big-button">Войти</button>
-
     </div>
   </main>
 

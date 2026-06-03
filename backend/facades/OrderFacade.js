@@ -1,9 +1,9 @@
 const DatabaseAdapter = require('../adapters/DatabaseAdapter');
 
 class OrderFacade {
-
+  
   async createOrder(userId, branchId, items) {
-
+    
     if (!userId || !branchId) {
       throw new Error('Некорректные данные заказа');
     }
@@ -11,12 +11,13 @@ class OrderFacade {
     if (!Array.isArray(items) || items.length === 0) {
       throw new Error('Корзина пуста');
     }
-
+    
     const dishIds = items.map(i => i && i.dishId).filter(Boolean);
     const dishes = await DatabaseAdapter.getDishesByIds(dishIds);
     const dishById = new Map(dishes.map(d => [d.id, d]));
 
     let totalPrice = 0;
+    const orderItems = [];
 
     for (const item of items) {
       const dishId = item && item.dishId;
@@ -31,37 +32,155 @@ class OrderFacade {
         throw new Error(`Блюдо не найдено: ${dishId}`);
       }
 
+      const isAvailable = await DatabaseAdapter.getDishAvailabilityInBranch(dishId, branchId);
+      if (!isAvailable) {
+        throw new Error(`Блюдо "${dish.name}" недоступно в выбранном ресторане`);
+      }
+
       const price = Number(dish.price);
       if (!Number.isFinite(price)) {
         throw new Error(`Некорректная цена блюда: ${dishId}`);
       }
 
-      totalPrice += price * quantity;
+      const itemTotal = price * quantity;
+      totalPrice += itemTotal;
+
+      orderItems.push({
+        dishId: dishId,
+        quantity: quantity,
+        price: price
+      });
     }
-
-    const order = await DatabaseAdapter.createOrder(
-      userId,
-      branchId,
-      totalPrice
-    );
-
-    for (const item of items) {
-      const dish = dishById.get(item.dishId);
-      const price = Number(dish.price);
-
-      await DatabaseAdapter.addOrderItem(
-        order.id,
-        item.dishId,
-        item.quantity,
-        price
-      );
-    }
+    
+    const order = await DatabaseAdapter.createFullOrder(userId, branchId, orderItems);
 
     return order;
   }
-
+  
   async getUserOrders(userId) {
+    if (!userId) {
+      throw new Error('Пользователь не указан');
+    }
     return await DatabaseAdapter.getUserOrders(userId);
+  }
+  
+  async getBranchOrders(branchId) {
+    if (!branchId) {
+      throw new Error('Филиал не указан');
+    }
+    return await DatabaseAdapter.getOrdersByBranch(branchId);
+  }
+  
+  async getOrderById(orderId) {
+    if (!orderId) {
+      throw new Error('ID заказа не указан');
+    }
+    return await DatabaseAdapter.getOrderById(orderId);
+  }
+  
+  async getOrderItems(orderId) {
+    if (!orderId) {
+      throw new Error('ID заказа не указан');
+    }
+    return await DatabaseAdapter.getOrderItems(orderId);
+  }
+  
+  async updateOrderStatus(orderId, status, userId) {
+    
+    const user = await DatabaseAdapter.getUserById(userId);
+    if (!user || user.role !== 'staff') {
+      throw new Error('Нет доступа');
+    }
+    
+    const order = await DatabaseAdapter.getOrderById(orderId);
+    if (!order) {
+      throw new Error('Заказ не найден');
+    }
+    
+    if (order.branch_id !== user.branch_id) {
+      throw new Error('Нет доступа к этому заказу');
+    }
+    
+    const validStatuses = ['created', 'cooking', 'ready', 'issued', 'cancelled'];
+    if (!validStatuses.includes(status)) {
+      throw new Error('Неверный статус заказа');
+    }
+
+    return await DatabaseAdapter.updateOrderStatus(orderId, status);
+  }
+  
+  async cancelOrder(orderId, userId) {
+    
+    const order = await DatabaseAdapter.getOrderById(orderId);
+    if (!order) {
+      throw new Error('Заказ не найден');
+    }
+    
+    if (order.user_id !== userId) {
+      throw new Error('Нет доступа к этому заказу');
+    }
+    
+    if (order.status !== 'created') {
+      throw new Error('Нельзя отменить заказ в статусе: ' + order.status);
+    }
+
+    return await DatabaseAdapter.updateOrderStatus(orderId, 'cancelled');
+  }
+  
+  async getUserOrderStats(userId) {
+    const orders = await this.getUserOrders(userId);
+    
+    const stats = {
+      total: orders.length,
+      totalSpent: 0,
+      created: 0,
+      cooking: 0,
+      ready: 0,
+      issued: 0,
+      cancelled: 0
+    };
+
+    for (const order of orders) {
+      stats.totalSpent += parseFloat(order.total_price);
+      switch (order.status) {
+        case 'created': stats.created++; break;
+        case 'cooking': stats.cooking++; break;
+        case 'ready': stats.ready++; break;
+        case 'issued': stats.issued++; break;
+        case 'cancelled': stats.cancelled++; break;
+      }
+    }
+
+    return stats;
+  }
+
+  async getBranchOrderStats(branchId) {
+    const orders = await this.getBranchOrders(branchId);
+    
+    const stats = {
+      total: orders.length,
+      totalRevenue: 0,
+      created: 0,
+      cooking: 0,
+      ready: 0,
+      issued: 0,
+      cancelled: 0
+    };
+
+    for (const order of orders) {
+      if (order.status === 'issued') {
+        stats.totalRevenue += parseFloat(order.total_price);
+      }
+      switch (order.status) {
+        case 'created': stats.created++; break;
+        case 'cooking': stats.cooking++; break;
+        case 'ready': stats.ready++; break;
+        case 'issued': stats.issued++; break;
+        case 'cancelled': stats.cancelled++; break;
+      }
+    }
+
+    return stats;
   }
 }
 

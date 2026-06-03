@@ -1,11 +1,91 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Мои заказы</title>
+  <title>Мои заказы - MunchCrunch</title>
   <link rel="stylesheet" href="../styles/style.css">
+  <style>
+    .header-title {
+        flex-grow: 1;
+        text-align: center;
+        margin: 0;
+        font-size: 24px;
+    }
+    nav {
+        display: flex;
+        gap: 15px;
+    }
+    
+    /* Статусы заказов */
+    .order-status {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: bold;
+    }
+    .status-created {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    .status-cooking {
+        background-color: #ffe0b2;
+        color: #e65100;
+    }
+    .status-ready {
+        background-color: #c8e6c9;
+        color: #2e7d32;
+    }
+    .status-issued {
+        background-color: #d1c4e9;
+        color: #4527a0;
+    }
+    .status-cancelled {
+        background-color: #ffcdd2;
+        color: #c62828;
+    }
+    
+    /* Карточка заказа */
+    .order-card {
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .order-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .order-card h3 {
+        margin: 0 0 10px 0;
+        color: #222;
+    }
+    
+    .order-card p {
+        margin: 8px 0;
+    }
+    
+    .order-card button {
+        margin-top: 10px;
+    }
+    
+    .auto-refresh-hint {
+        text-align: right;
+        font-size: 12px;
+        color: #999;
+        margin-bottom: 15px;
+    }
+    
+    .center {
+        text-align: center;
+    }
+  </style>
 </head>
 <body>
+
+  <!-- Уведомления -->
+  <div id="notice" class="notice notice--hidden"></div>
+
+  <!-- Шапка -->
   <header>
     <h1>MunchCrunch</h1>
     <h1 class="header-title">Мои заказы</h1>
@@ -13,16 +93,23 @@
       <a href="menu.html">Меню</a>
       <a href="cart.html">Корзина</a>
       <a href="branches.html">Рестораны</a>
+      <a href="orders.html" class="muted">Заказы</a>
       <a href="profile.html">Профиль</a>
     </nav>
   </header>
 
+  <!-- Основной контент -->
   <main class="container">
+    <div class="auto-refresh-hint">
+
+    </div>
     <div id="orders"></div>
   </main>
 
+  <!-- Подключение скриптов -->
   <script src="../js/config.js"></script>
   <script src="../js/ui.js"></script>
   <script src="../js/order.js"></script>
+
 </body>
 </html>

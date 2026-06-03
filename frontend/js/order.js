@@ -1,53 +1,202 @@
 const API_URL = getApiUrl();
-const userId = localStorage.getItem('userId');
 
-async function loadOrders() {
-  const div = document.getElementById('orders');
-  if (!div) return;
+// ============================================
+// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// ============================================
 
-  if (!userId) {
-    div.innerHTML = `
-      <div class="card">
-        <p>Чтобы посмотреть заказы, нужно войти.</p>
-        <button type="button" onclick="location.href='login.html'">Войти</button>
-      </div>
-    `;
-    return;
+function getAuthToken() {
+  return localStorage.getItem('sessionToken');
+}
+
+function getUserId() {
+  return localStorage.getItem('userId');
+}
+
+function getUserRole() {
+  return localStorage.getItem('role');
+}
+
+// Проверка сессии
+async function checkSession() {
+  const token = getAuthToken();
+  const role = getUserRole();
+  
+  // Сотрудника перенаправляем на его панель
+  if (role === 'staff') {
+    window.location.href = 'staff.html';
+    return false;
   }
-
-  div.innerHTML = '<p class="muted">Загрузка...</p>';
-
+  
+  if (!token) {
+    window.location.href = 'login.html';
+    return false;
+  }
+  
   try {
-    const res = await fetch(`${API_URL}/orders/${userId}`);
-    if (!res.ok) {
-      div.innerHTML = '';
-      showNotice('Не удалось загрузить заказы', 'error');
-      return;
-    }
-
-    const orders = await res.json();
-
-    if (!Array.isArray(orders) || orders.length === 0) {
-      div.innerHTML = '<p class="muted">Заказов пока нет</p>';
-      return;
-    }
-
-    div.innerHTML = '';
-
-    orders.forEach(order => {
-      const el = document.createElement('div');
-      el.className = 'card';
-      el.innerHTML = `
-        <h3>Заказ #${order.id}</h3>
-        <p>Сумма: ${order.total_price} ₽</p>
-        <p>Статус: ${order.status}</p>
-      `;
-      div.appendChild(el);
+    const res = await fetch(`${API_URL}/check-session`, {
+      headers: { 'Authorization': `Bearer ${token}` }
     });
+    
+    if (!res.ok) {
+      localStorage.clear();
+      window.location.href = 'login.html';
+      return false;
+    }
+    
+    return true;
   } catch (e) {
-    div.innerHTML = '';
-    showNotice('Ошибка сети при загрузке заказов', 'error');
+    window.location.href = 'login.html';
+    return false;
   }
 }
 
-loadOrders();
+// ============================================
+// ЗАГРУЗКА ЗАКАЗОВ
+// ============================================
+
+let autoRefreshInterval = null;
+
+async function loadUserOrders() {
+  const userId = getUserId();
+  const token = getAuthToken();
+  
+  if (!userId || !token) {
+    showNotice('Сначала войдите в систему', 'error');
+    window.location.href = 'login.html';
+    return;
+  }
+  
+  try {
+    const res = await fetch(`${API_URL}/orders/${userId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.error || 'Ошибка загрузки');
+    }
+    
+    const orders = await res.json();
+    renderOrders(orders);
+  } catch (e) {
+    console.error('Ошибка:', e);
+    showNotice(e.message || 'Ошибка загрузки заказов', 'error');
+  }
+}
+
+// ============================================
+// ОТРИСОВКА ЗАКАЗОВ
+// ============================================
+
+function renderOrders(orders) {
+  const container = document.getElementById('orders');
+  if (!container) return;
+  
+  if (orders.length === 0) {
+    container.innerHTML = '<div class="card"><p class="muted center">У вас пока нет заказов</p></div>';
+    return;
+  }
+  
+  container.innerHTML = '';
+  
+  orders.forEach(order => {
+    const el = document.createElement('div');
+    el.className = 'card order-card';
+    el.dataset.id = order.id;
+    el.dataset.status = order.status;
+    
+    el.innerHTML = `
+      <h3>Заказ #${order.id}</h3>
+      <p><strong>Сумма:</strong> ${formatPrice(order.total_price)} ₽</p>
+      <p><strong>Статус:</strong> <span id="status-${order.id}" class="order-status status-${order.status}">${getStatusText(order.status)}</span></p>
+      <p><strong>Дата:</strong> ${formatDate(order.created_at)}</p>
+      ${order.updated_at && order.updated_at !== order.created_at ? 
+        `<p class="muted">Последнее обновление: ${formatTime(order.updated_at)}</p>` : ''}
+      ${order.status === 'ready' ? 
+        '<button onclick="confirmReceived()" class="secondary" style="margin-top: 10px;">Подтвердить получение</button>' : ''}
+    `;
+    container.appendChild(el);
+  });
+}
+
+// ============================================
+// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ ОТОБРАЖЕНИЯ
+// ============================================
+
+function formatPrice(price) {
+  return Number(price).toLocaleString('ru-RU');
+}
+
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('ru-RU', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+}
+
+function formatTime(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('ru-RU', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+function getStatusText(status) {
+  const statuses = {
+    'created': 'Создан',
+    'cooking': 'Готовится',
+    'ready': 'Готов к выдаче',
+    'issued': 'Получен',
+    'cancelled': 'Отменен'
+  };
+  return statuses[status] || status;
+}
+
+// ============================================
+// ДЕЙСТВИЯ С ЗАКАЗАМИ
+// ============================================
+
+function confirmReceived() {
+  showNotice('Подтвердите получение заказа у сотрудника ресторана', 'info');
+}
+
+// ============================================
+// АВТООБНОВЛЕНИЕ
+// ============================================
+
+function startAutoRefresh() {
+  if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+  autoRefreshInterval = setInterval(() => {
+    loadUserOrders();
+  }, 10000); // Обновляем каждые 10 секунд
+}
+
+function stopAutoRefresh() {
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval);
+    autoRefreshInterval = null;
+  }
+}
+
+// ============================================
+// ИНИЦИАЛИЗАЦИЯ
+// ============================================
+
+async function initOrdersPage() {
+  const sessionValid = await checkSession();
+  if (!sessionValid) return;
+  
+  await loadUserOrders();
+  startAutoRefresh();
+}
+
+// Останавливаем автообновление при уходе со страницы
+window.addEventListener('beforeunload', () => {
+  stopAutoRefresh();
+});
+
+// Запуск
+initOrdersPage();

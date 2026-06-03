@@ -1,24 +1,75 @@
 const API_URL = getApiUrl();
 
-// === ЗАГРУЗКА ИНФОРМАЦИИ О ТОЧКЕ ===
+function getAuthToken() {
+  return localStorage.getItem('sessionToken');
+}
+
+function getUserId() {
+  return localStorage.getItem('userId');
+}
+
+function getUserRole() {
+  return localStorage.getItem('role');
+}
+
+function getSelectedBranch() {
+  return localStorage.getItem('branchId');
+}
+
+async function checkSession() {
+  const token = getAuthToken();
+  const role = getUserRole();
+  
+  
+  if (role === 'staff') {
+    window.location.href = 'staff.html';
+    return false;
+  }
+  
+  if (!token) {
+    window.location.href = 'login.html';
+    return false;
+  }
+  
+  try {
+    const res = await fetch(`${API_URL}/check-session`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    if (!res.ok) {
+      localStorage.clear();
+      window.location.href = 'login.html';
+      return false;
+    }
+    
+    return true;
+  } catch (e) {
+    window.location.href = 'login.html';
+    return false;
+  }
+}
+
 async function loadSelectedBranch() {
-  const branchId = localStorage.getItem('branchId');
+  const branchId = getSelectedBranch();
   const branchInfoDiv = document.getElementById('selected-branch-info');
   
   if (!branchInfoDiv) return;
   
   if (!branchId) {
     branchInfoDiv.innerHTML = `
+      <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 15px;">
         <strong>Точка не выбрана</strong>
         <p style="margin: 10px 0 0 0;">Пожалуйста, выберите ресторан для оформления заказа.</p>
         <button onclick="window.location.href='branches.html'" style="margin-top: 10px;">Выбрать точку</button>
       </div>
     `;
-    return;
+    return false;
   }
   
   try {
     const res = await fetch(`${API_URL}/branches`);
+    if (!res.ok) throw new Error('Ошибка загрузки');
+    
     const branches = await res.json();
     const branch = branches.find(b => b.id === Number(branchId));
     
@@ -36,6 +87,7 @@ async function loadSelectedBranch() {
           </div>
         </div>
       `;
+      return true;
     } else {
       branchInfoDiv.innerHTML = `
         <div style="background: #ffebee; border: 1px solid #f44336; border-radius: 8px; padding: 15px;">
@@ -43,6 +95,7 @@ async function loadSelectedBranch() {
           <button onclick="window.location.href='branches.html'" style="margin-top: 10px;">Выбрать точку заново</button>
         </div>
       `;
+      return false;
     }
   } catch (e) {
     console.error('Ошибка загрузки точки:', e);
@@ -51,6 +104,7 @@ async function loadSelectedBranch() {
         Ошибка загрузки информации о точке
       </div>
     `;
+    return false;
   }
 }
 
@@ -132,18 +186,19 @@ function removeItem(index) {
   renderCart();
 }
 
-// === ОФОРМЛЕНИЕ ЗАКАЗА ===
 async function checkout() {
   const cart = getCart();
-  const userId = localStorage.getItem('userId');
-  const branchId = localStorage.getItem('branchId');
+  const userId = getUserId();
+  const branchId = getSelectedBranch();
+  const token = getAuthToken();
 
+  
   if (cart.length === 0) {
     showNotice('Корзина пуста', 'error');
     return;
   }
-
-  if (!userId) {
+  
+  if (!userId || !token) {
     showNotice('Сначала войдите в систему', 'error');
     window.location.href = 'login.html';
     return;
@@ -155,19 +210,23 @@ async function checkout() {
     return;
   }
 
+  const orderData = {
+    branchId: Number(branchId),
+    items: cart.map(item => ({
+      dishId: item.dishId,
+      quantity: item.quantity,
+      price: item.price
+    }))
+  };
+
   try {
     const res = await fetch(`${API_URL}/orders`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: Number(userId),
-        branchId: Number(branchId),
-        items: cart.map(item => ({
-          dishId: item.dishId,
-          quantity: item.quantity,
-          price: item.price
-        }))
-      })
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(orderData)
     });
 
     const data = await res.json().catch(() => ({}));
@@ -176,19 +235,26 @@ async function checkout() {
       showNotice(data.error || 'Не удалось оформить заказ', 'error');
       return;
     }
-
+    
     localStorage.removeItem('cart');
-    showNotice('Заказ оформлен', 'success');
+    showNotice('Заказ оформлен!', 'success');
     renderCart();
-    window.location.href = 'orders.html';
+    
+    
+    setTimeout(() => {
+      window.location.href = 'orders.html';
+    }, 1500);
     
   } catch (e) {
+    console.error('Ошибка оформления:', e);
     showNotice('Ошибка сети при оформлении заказа', 'error');
   }
 }
 
-// === ИНИЦИАЛИЗАЦИЯ ===
 async function initCartPage() {
+  const sessionValid = await checkSession();
+  if (!sessionValid) return;
+  
   await loadSelectedBranch();
   renderCart();
 }

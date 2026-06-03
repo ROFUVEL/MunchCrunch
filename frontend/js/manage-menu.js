@@ -1,14 +1,64 @@
 const API_URL = getApiUrl();
 
+// ============================================
+// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// ============================================
+
+function getAuthToken() {
+  return localStorage.getItem('sessionToken');
+}
+
+function getUserId() {
+  return localStorage.getItem('userId');
+}
+
+function getUserRole() {
+  return localStorage.getItem('role');
+}
+
+// Проверка сессии
+async function checkSession() {
+  const token = getAuthToken();
+  const role = getUserRole();
+  
+  if (role !== 'staff' || !token) {
+    window.location.href = 'menu.html';
+    return false;
+  }
+  
+  try {
+    const res = await fetch(`${API_URL}/check-session`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    if (!res.ok) {
+      localStorage.clear();
+      window.location.href = 'login.html';
+      return false;
+    }
+    
+    return true;
+  } catch (e) {
+    window.location.href = 'login.html';
+    return false;
+  }
+}
+
+// ============================================
+// ЗАГРУЗКА ДАННЫХ
+// ============================================
+
 let categories = [];
 let allDishes = [];
 let currentFilter = 'all'; // 'all', 'available', 'unavailable'
 
+// Загрузка категорий
 async function loadCategories() {
   try {
     const res = await fetch(`${API_URL}/categories`);
     categories = await res.json();
     
+    // Заполняем select в модальном окне
     const select = document.getElementById('dish-category');
     if (select) {
       select.innerHTML = '<option value="">Выберите категорию</option>';
@@ -18,27 +68,39 @@ async function loadCategories() {
     }
   } catch (e) {
     console.error('Ошибка загрузки категорий:', e);
+    showNotice('Не удалось загрузить категории', 'error');
   }
 }
 
+// Загрузка всех блюд (включая скрытые)
 async function loadMenu() {
-  const role = localStorage.getItem('role');
-  const userId = localStorage.getItem('userId');
+  const token = getAuthToken();
+  const role = getUserRole();
   
-  if (role !== 'staff' || !userId) {
+  if (role !== 'staff' || !token) {
     window.location.href = 'menu.html';
     return;
   }
   
   try {
-    const res = await fetch(`${API_URL}/menu/all`);
+    const res = await fetch(`${API_URL}/menu/all`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    if (!res.ok) throw new Error('Ошибка загрузки');
+    
     allDishes = await res.json();
     renderFilterButtons();
     renderMenu();
   } catch (e) {
+    console.error('Ошибка загрузки меню:', e);
     showNotice('Ошибка загрузки меню', 'error');
   }
 }
+
+// ============================================
+// ФИЛЬТРАЦИЯ
+// ============================================
 
 function renderFilterButtons() {
   const container = document.getElementById('filter-bar');
@@ -65,6 +127,10 @@ function renderFilterButtons() {
   });
 }
 
+// ============================================
+// ОТРИСОВКА МЕНЮ
+// ============================================
+
 function renderMenu() {
   const container = document.getElementById('menu-list');
   if (!container) return;
@@ -89,7 +155,7 @@ function renderMenu() {
     el.className = 'dish-item';
     el.innerHTML = `
       <div class="dish-info">
-        <strong>${dish.name}</strong>
+        <strong>${escapeHtml(dish.name)}</strong>
         <span class="muted">${dish.category_name || 'Без категории'}</span>
         <p class="muted">${dish.description || 'Нет описания'}</p>
         <div class="price">${dish.price} ₽</div>
@@ -107,22 +173,57 @@ function renderMenu() {
   });
 }
 
+// Защита от XSS
+function escapeHtml(str) {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ============================================
+// УПРАВЛЕНИЕ ДОСТУПНОСТЬЮ
+// ============================================
+
 async function toggleAvailability(dishId, isAvailable) {
+  const token = getAuthToken();
+  const userId = getUserId();
+  
+  if (!token || !userId) {
+    showNotice('Сессия истекла', 'error');
+    window.location.href = 'login.html';
+    return;
+  }
+  
   try {
     const res = await fetch(`${API_URL}/dishes/${dishId}/availability`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({ isAvailable: !isAvailable })
     });
     
-    if (!res.ok) throw new Error('Ошибка');
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.error || 'Ошибка обновления');
+    }
     
     showNotice(`Блюдо ${!isAvailable ? 'показано' : 'скрыто'}`, 'success');
-    await loadMenu(); // Перезагружаем все блюда
+    await loadMenu(); // Перезагружаем список
   } catch (e) {
-    showNotice('Ошибка обновления', 'error');
+    console.error('Ошибка:', e);
+    showNotice(e.message || 'Ошибка обновления', 'error');
   }
 }
+
+// ============================================
+// МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ БЛЮДА
+// ============================================
 
 function showModal() {
   document.getElementById('add-dish-modal').style.display = 'block';
@@ -139,51 +240,76 @@ function hideModal() {
 }
 
 async function saveDish() {
+  const token = getAuthToken();
+  const userId = getUserId();
+  
+  if (!token || !userId) {
+    showNotice('Сессия истекла', 'error');
+    window.location.href = 'login.html';
+    return;
+  }
+  
   const name = document.getElementById('dish-name').value;
   const description = document.getElementById('dish-description').value;
   const price = document.getElementById('dish-price').value;
   const categoryId = document.getElementById('dish-category').value;
-  const userId = localStorage.getItem('userId');
   
-  if (!name || !price || !categoryId) {
-    showNotice('Заполните название, цену и категорию', 'error');
+  // Валидация
+  if (!name || !name.trim()) {
+    showNotice('Введите название блюда', 'error');
+    return;
+  }
+  
+  if (!price || parseFloat(price) <= 0) {
+    showNotice('Введите корректную цену', 'error');
+    return;
+  }
+  
+  if (!categoryId) {
+    showNotice('Выберите категорию', 'error');
     return;
   }
   
   try {
     const res = await fetch(`${API_URL}/dishes`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({
-        userId,
-        name,
-        description,
-        price: Number(price),
-        category_id: Number(categoryId)
+        name: name.trim(),
+        description: description.trim(),
+        price: parseFloat(price),
+        category_id: parseInt(categoryId),
+        image_url: ''
       })
     });
     
-    if (!res.ok) throw new Error('Ошибка');
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.error || 'Ошибка добавления');
+    }
     
     showNotice('Блюдо добавлено', 'success');
     hideModal();
     await loadMenu(); // Перезагружаем список
   } catch (e) {
-    showNotice('Ошибка добавления блюда', 'error');
+    console.error('Ошибка:', e);
+    showNotice(e.message || 'Ошибка добавления блюда', 'error');
   }
 }
 
-function initManageMenu() {
-  const role = localStorage.getItem('role');
-  const userId = localStorage.getItem('userId');
+// ============================================
+// ИНИЦИАЛИЗАЦИЯ
+// ============================================
+
+async function initManageMenu() {
+  const sessionValid = await checkSession();
+  if (!sessionValid) return;
   
-  if (role !== 'staff' || !userId) {
-    window.location.href = 'menu.html';
-    return;
-  }
-  
-  loadCategories();
-  loadMenu();
+  await loadCategories();
+  await loadMenu();
   
   const addBtn = document.getElementById('add-dish-btn');
   if (addBtn) addBtn.onclick = showModal;
@@ -198,4 +324,5 @@ function initManageMenu() {
   if (overlay) overlay.onclick = hideModal;
 }
 
+// Запуск
 initManageMenu();

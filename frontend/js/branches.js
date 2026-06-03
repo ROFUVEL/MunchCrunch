@@ -1,5 +1,37 @@
 const API_URL = getApiUrl();
 
+async function checkSession() {
+  const token = localStorage.getItem('sessionToken');
+  const role = localStorage.getItem('role');
+  
+  if (role === 'staff') {
+    window.location.href = 'staff.html';
+    return false;
+  }
+  
+  if (!token) {
+    window.location.href = 'login.html';
+    return false;
+  }
+  
+  try {
+    const res = await fetch(`${API_URL}/check-session`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    if (!res.ok) {
+      localStorage.clear();
+      window.location.href = 'login.html';
+      return false;
+    }
+    
+    return true;
+  } catch (e) {
+    window.location.href = 'login.html';
+    return false;
+  }
+}
+
 async function loadBranches() {
   const div = document.getElementById('branches');
   if (!div) return;
@@ -39,7 +71,6 @@ async function loadBranches() {
       buttonContainer.className = 'actions';
       
       if (isSelected) {
-        // Точка выбрана — показываем неактивную кнопку с текстом "Выбрано"
         const selectedBtn = document.createElement('button');
         selectedBtn.innerText = '✓ Выбрано';
         selectedBtn.disabled = true;
@@ -47,7 +78,6 @@ async function loadBranches() {
         selectedBtn.style.cursor = 'not-allowed';
         buttonContainer.appendChild(selectedBtn);
       } else {
-        // Точка не выбрана — показываем активную кнопку
         const selectBtn = document.createElement('button');
         selectBtn.innerText = 'Выбрать';
         selectBtn.onclick = () => selectBranch(branch.id);
@@ -58,7 +88,6 @@ async function loadBranches() {
       div.appendChild(el);
     });
     
-    // Показываем уведомление, если точка уже выбрана
     if (selectedBranchId) {
       const selectedBranch = branches.find(b => b.id === Number(selectedBranchId));
       if (selectedBranch) {
@@ -75,8 +104,56 @@ async function loadBranches() {
 function selectBranch(id) {
   localStorage.setItem('branchId', id);
   showNotice('Точка выбрана', 'success');
-  // Перезагружаем страницу, чтобы обновить состояние кнопок
-  loadBranches();
+  loadBranches(); 
 }
 
-loadBranches();
+function goToCart() {
+  const branchId = localStorage.getItem('branchId');
+  if (!branchId) {
+    showNotice('Сначала выберите точку', 'error');
+    return;
+  }
+  window.location.href = 'cart.html';
+}
+
+async function logout() {
+  const token = localStorage.getItem('sessionToken');
+  
+  if (token) {
+    try {
+      await fetch(`${API_URL}/logout`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+    } catch (e) {
+      console.error('Ошибка при выходе:', e);
+    }
+  }
+  
+  localStorage.clear();
+  sessionStorage.clear();
+  showNotice('Вы вышли из системы', 'success');
+  window.location.href = 'login.html';
+}
+
+async function initBranchesPage() {
+  const sessionValid = await checkSession();
+  if (!sessionValid) return;
+  
+  await loadBranches();
+  
+  const cartBtn = document.getElementById('go-to-cart');
+  if (cartBtn) {
+    cartBtn.addEventListener('click', goToCart);
+  }
+  
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', logout);
+  }
+}
+
+initBranchesPage();
