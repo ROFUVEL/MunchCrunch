@@ -1,9 +1,5 @@
 const API_URL = getApiUrl();
 
-// ============================================
-// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
-// ============================================
-
 function getAuthToken() {
   return localStorage.getItem('sessionToken');
 }
@@ -16,12 +12,10 @@ function getUserRole() {
   return localStorage.getItem('role');
 }
 
-// Проверка сессии
 async function checkSession() {
   const token = getAuthToken();
   const role = getUserRole();
   
-  // Сотрудника перенаправляем на его панель
   if (role === 'staff') {
     window.location.href = 'staff.html';
     return false;
@@ -49,10 +43,6 @@ async function checkSession() {
     return false;
   }
 }
-
-// ============================================
-// ЗАГРУЗКА ЗАКАЗОВ
-// ============================================
 
 let autoRefreshInterval = null;
 
@@ -84,10 +74,6 @@ async function loadUserOrders() {
   }
 }
 
-// ============================================
-// ОТРИСОВКА ЗАКАЗОВ
-// ============================================
-
 function renderOrders(orders) {
   const container = document.getElementById('orders');
   if (!container) return;
@@ -118,10 +104,6 @@ function renderOrders(orders) {
     container.appendChild(el);
   });
 }
-
-// ============================================
-// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ ОТОБРАЖЕНИЯ
-// ============================================
 
 function formatPrice(price) {
   return Number(price).toLocaleString('ru-RU');
@@ -155,23 +137,15 @@ function getStatusText(status) {
   return statuses[status] || status;
 }
 
-// ============================================
-// ДЕЙСТВИЯ С ЗАКАЗАМИ
-// ============================================
-
 function confirmReceived() {
   showNotice('Подтвердите получение заказа у сотрудника ресторана', 'info');
 }
-
-// ============================================
-// АВТООБНОВЛЕНИЕ
-// ============================================
 
 function startAutoRefresh() {
   if (autoRefreshInterval) clearInterval(autoRefreshInterval);
   autoRefreshInterval = setInterval(() => {
     loadUserOrders();
-  }, 10000); // Обновляем каждые 10 секунд
+  }, 10000);
 }
 
 function stopAutoRefresh() {
@@ -181,10 +155,6 @@ function stopAutoRefresh() {
   }
 }
 
-// ============================================
-// ИНИЦИАЛИЗАЦИЯ
-// ============================================
-
 async function initOrdersPage() {
   const sessionValid = await checkSession();
   if (!sessionValid) return;
@@ -193,10 +163,8 @@ async function initOrdersPage() {
   startAutoRefresh();
 }
 
-// Останавливаем автообновление при уходе со страницы
 window.addEventListener('beforeunload', () => {
   stopAutoRefresh();
 });
 
-// Запуск
 initOrdersPage();

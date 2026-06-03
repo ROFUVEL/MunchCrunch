@@ -16,7 +16,6 @@
         gap: 15px;
     }
     
-    /* Статусы заказов */
     .order-status {
         display: inline-block;
         padding: 4px 12px;
@@ -44,17 +43,6 @@
         background-color: #ffcdd2;
         color: #c62828;
     }
-    
-    /* Карточка заказа */
-    .order-card {
-        margin-bottom: 20px;
-        transition: all 0.3s ease;
-    }
-    .order-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    
     .order-card h3 {
         margin: 0 0 10px 0;
         color: #222;
@@ -82,10 +70,8 @@
 </head>
 <body>
 
-  <!-- Уведомления -->
   <div id="notice" class="notice notice--hidden"></div>
 
-  <!-- Шапка -->
   <header>
     <h1>MunchCrunch</h1>
     <h1 class="header-title">Мои заказы</h1>
@@ -98,15 +84,10 @@
     </nav>
   </header>
 
-  <!-- Основной контент -->
   <main class="container">
-    <div class="auto-refresh-hint">
-
-    </div>
     <div id="orders"></div>
   </main>
 
-  <!-- Подключение скриптов -->
   <script src="../js/config.js"></script>
   <script src="../js/ui.js"></script>
   <script src="../js/order.js"></script>
