@@ -1,12 +1,10 @@
 const API_URL = getApiUrl();
 
-// Очистка старых данных при загрузке страницы логина
 function clearOldSession() {
   localStorage.clear();
   sessionStorage.clear();
 }
 
-// Валидация телефона
 function validatePhone(phone) {
   if (!phone) {
     showNotice('Введите номер телефона', 'error');
@@ -22,7 +20,6 @@ function validatePhone(phone) {
   return true;
 }
 
-// Шаг 1: Логин (отправка телефона)
 async function login() {
   const phoneInput = document.getElementById('phone');
   const phone = phoneInput.value.trim();
@@ -31,7 +28,6 @@ async function login() {
     return;
   }
   
-  // Блокируем кнопку на время запроса
   const loginBtn = document.getElementById('login-btn');
   const originalText = loginBtn.innerText;
   loginBtn.innerText = 'Отправка...';
@@ -53,12 +49,10 @@ async function login() {
       return;
     }
     
-    // Сохраняем телефон во временное хранилище
     sessionStorage.setItem('verifyPhone', phone);
     
     showNotice('Код подтверждения отправлен', 'success');
     
-    // Переходим на страницу подтверждения
     window.location.href = 'verify.html';
     
   } catch (e) {
@@ -69,25 +63,20 @@ async function login() {
   }
 }
 
-// Обработчик нажатия Enter в поле телефона
 function onPhoneKeyPress(event) {
   if (event.key === 'Enter') {
     login();
   }
 }
 
-// Инициализация страницы
 function initLoginPage() {
-  // Очищаем старые сессии
   clearOldSession();
   
-  // Кнопка входа
   const loginBtn = document.getElementById('login-btn');
   if (loginBtn) {
     loginBtn.addEventListener('click', login);
   }
   
-  // Кнопка очистки (если есть)
   const clearBtn = document.getElementById('clear-btn');
   if (clearBtn) {
     clearBtn.addEventListener('click', () => {
@@ -96,12 +85,10 @@ function initLoginPage() {
     });
   }
   
-  // Обработчик Enter
   const phoneInput = document.getElementById('phone');
   if (phoneInput) {
     phoneInput.addEventListener('keypress', onPhoneKeyPress);
   }
 }
 
-// Запуск
 initLoginPage();
