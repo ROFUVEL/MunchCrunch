@@ -14,7 +14,7 @@ describe('AuthFacade', () => {
     });
 
     const user =
-      await AuthFacade.login('999', false);
+      await AuthFacade.login('999');
 
     expect(user.role).toBe('client');
   });
@@ -30,18 +30,10 @@ describe('AuthFacade', () => {
     });
 
     const user =
-      await AuthFacade.login('111', false);
+      await AuthFacade.login('111');
 
     expect(user.phone).toBe('111');
   });
 
-  test('Ошибка входа сотрудника', async () => {
-
-    DatabaseAdapter.getUserByPhone.mockResolvedValue(null);
-
-    await expect(
-      AuthFacade.login('555', true)
-    ).rejects.toThrow('Сотрудник не найден');
-  });
 
 });

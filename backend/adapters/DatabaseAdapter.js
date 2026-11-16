@@ -26,14 +26,6 @@ class DatabaseAdapter {
     return res.rows[0];
   }
 
-  async getStaffBranch(userId) {
-    const res = await pool.query(
-      `SELECT branch_id FROM users WHERE id = $1 AND role = 'staff'`,
-      [userId]
-    );
-    return res.rows[0] ? res.rows[0].branch_id : null;
-  }
-
   async getCategories() {
     const res = await pool.query(
       `SELECT * FROM categories ORDER BY name`
@@ -70,39 +62,6 @@ class DatabaseAdapter {
     return res.rows;
   }
 
-  async getAllDishesByBranch(branchId) {
-    const res = await pool.query(
-      `
-      SELECT 
-        d.id, d.name, d.description, 
-        COALESCE(bd.price_override, d.price) as price,
-        d.image_url, d.category_id, c.name as category_name,
-        bd.is_available
-      FROM dishes d
-      LEFT JOIN categories c ON d.category_id = c.id
-      INNER JOIN branch_dishes bd ON d.id = bd.dish_id
-      WHERE bd.branch_id = $1
-      ORDER BY d.id
-      `,
-      [branchId]
-    );
-    return res.rows;
-  }
-
-  async getAllDishes() {
-    const res = await pool.query(
-      `
-      SELECT 
-        d.*, 
-        c.name as category_name
-      FROM dishes d
-      LEFT JOIN categories c ON d.category_id = c.id
-      ORDER BY d.id
-      `
-    );
-    return res.rows;
-  }
-
   async getDishById(id) {
     const res = await pool.query(
       `SELECT * FROM dishes WHERE id = $1`,
@@ -119,51 +78,6 @@ class DatabaseAdapter {
       [uniqueIds]
     );
     return res.rows;
-  }
-
-  async createDishForAllBranches(dish) {
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      
-      const dishRes = await client.query(
-        `INSERT INTO dishes (name, description, price, image_url, category_id)
-         VALUES ($1, $2, $3, $4, $5)
-         RETURNING *`,
-        [dish.name, dish.description, dish.price, dish.image_url || '', dish.category_id]
-      );
-      
-      const newDish = dishRes.rows[0];
-      
-      const branches = await client.query(`SELECT id FROM branches`);
-      for (const branch of branches.rows) {
-        await client.query(
-          `INSERT INTO branch_dishes (branch_id, dish_id, is_available)
-           VALUES ($1, $2, true)
-           ON CONFLICT (branch_id, dish_id) DO NOTHING`,
-          [branch.id, newDish.id]
-        );
-      }
-      
-      await client.query('COMMIT');
-      return newDish;
-    } catch (e) {
-      await client.query('ROLLBACK');
-      throw e;
-    } finally {
-      client.release();
-    }
-  }
-
-  async updateDishAvailabilityInBranch(dishId, branchId, isAvailable) {
-    const res = await pool.query(
-      `UPDATE branch_dishes
-       SET is_available = $1
-       WHERE dish_id = $2 AND branch_id = $3
-       RETURNING *`,
-      [isAvailable, dishId, branchId]
-    );
-    return res.rows[0];
   }
 
   async getDishAvailabilityInBranch(dishId, branchId) {
@@ -237,18 +151,6 @@ class DatabaseAdapter {
     return res.rows;
   }
 
-  async getOrdersByBranch(branchId) {
-    const res = await pool.query(
-      `
-      SELECT id, user_id, branch_id, status, total_price, created_at, updated_at
-      FROM orders
-      WHERE branch_id = $1
-      ORDER BY created_at DESC
-      `,
-      [branchId]
-    );
-    return res.rows;
-  }
   async getOrderById(orderId) {
     const res = await pool.query(
       `SELECT id, user_id, branch_id, status, total_price, created_at, updated_at
@@ -333,7 +235,7 @@ class DatabaseAdapter {
 
   async getSession(token) {
     const res = await pool.query(
-      `SELECT s.*, u.phone, u.role, u.branch_id
+      `SELECT s.*, u.phone
        FROM sessions s
        JOIN users u ON s.user_id = u.id
        WHERE s.token = $1 AND s.expires_at > NOW()`,

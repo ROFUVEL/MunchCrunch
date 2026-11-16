@@ -10,12 +10,8 @@ class DatabaseAdapter {
   +getUserByPhone(phone)
   +createClient(phone)
   +getUserById(id)
-  +getStaffBranch(userId)
 
   +getMenuByBranch(branchId)
-  +getAllDishesByBranch(branchId)
-  +createDishForAllBranches(dish)
-  +updateDishAvailabilityInBranch(dishId, branchId, isAvailable)
   +getDishAvailabilityInBranch(dishId, branchId)
 
   +getBranches()
@@ -23,9 +19,7 @@ class DatabaseAdapter {
 
   +createFullOrder(userId, branchId, items)
   +getUserOrders(userId)
-  +getOrdersByBranch(branchId)
   +getOrderById(orderId)
-  +updateOrderStatus(orderId, status)
 
   +saveAuthCode(phone, code)
   +verifyAuthCode(phone, code)
@@ -44,32 +38,20 @@ class AuthFacade {
 
 class MenuFacade {
   +getMenu(branchId)
-  +getAllMenu(branchId)
 }
 
 class OrderFacade {
   +createOrder(userId, branchId, items)
   +getUserOrders(userId)
-  +updateOrderStatus(orderId, status, userId)
   +cancelOrder(orderId, userId)
 }
 
-class StaffFacade {
-  +getMyOrders(userId)
-  +updateOrderStatus(userId, orderId, status)
-  +getStaffInfo(userId)
-  +getBranchStats(userId)
-}
 
 class BranchFacade {
   +getBranches()
   +getBranchById(branchId)
 }
 
-class DishFacade {
-  +createDish(userId, dishData)
-  +toggleAvailability(userId, dishId, isAvailable)
-}
 
 ' =========================
 ' RELATIONS (Facade -> Adapter)
@@ -77,9 +59,7 @@ class DishFacade {
 AuthFacade --> DatabaseAdapter
 MenuFacade --> DatabaseAdapter
 OrderFacade --> DatabaseAdapter
-StaffFacade --> DatabaseAdapter
 BranchFacade --> DatabaseAdapter
-DishFacade --> DatabaseAdapter
 
 ' =========================
 ' DOMAIN ENTITIES (DB TABLES)
@@ -87,8 +67,6 @@ DishFacade --> DatabaseAdapter
 class User {
   +id
   +phone
-  +role
-  +branch_id
   +created_at
 }
 
@@ -171,6 +149,5 @@ Category "1" --> "*" Dish
 User "1" --> "*" Session
 User "1" --> "*" AuthCode
 
-User "1" --> "1" Branch
 
 @enduml

@@ -1,31 +1,16 @@
 const API_URL = getApiUrl();
 
-// ============================================
-// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
-// ============================================
-
 function getAuthToken() {
   return localStorage.getItem('sessionToken');
-}
-
-function getUserRole() {
-  return localStorage.getItem('role');
 }
 
 function getSelectedBranch() {
   return localStorage.getItem('branchId');
 }
 
-// Проверка сессии и редирект для сотрудника
+// Проверка сессии
 async function checkSession() {
   const token = getAuthToken();
-  const role = getUserRole();
-  
-  // Сотрудника перенаправляем на его панель
-  if (role === 'staff') {
-    window.location.href = 'staff.html';
-    return false;
-  }
   
   // Клиент без токена -> на логин
   if (!token) {
@@ -50,10 +35,6 @@ async function checkSession() {
     return false;
   }
 }
-
-// ============================================
-// ЗАГРУЗКА МЕНЮ
-// ============================================
 
 let allDishes = [];
 
@@ -82,10 +63,6 @@ async function loadMenu() {
   }
 }
 
-// ============================================
-// КАТЕГОРИИ
-// ============================================
-
 function renderCategoryButtons(dishes) {
   const categoriesDiv = document.getElementById('categories');
   if (!categoriesDiv) return;
@@ -104,10 +81,6 @@ function renderCategoryButtons(dishes) {
     categoriesDiv.appendChild(btn);
   });
 }
-
-// ============================================
-// ОТРИСОВКА БЛЮД
-// ============================================
 
 function renderDishes(dishes) {
   const menuDiv = document.getElementById('menu');
@@ -172,7 +145,6 @@ function renderDishes(dishes) {
   });
 }
 
-// Защита от XSS
 function escapeHtml(str) {
   if (!str) return '';
   return str
@@ -182,10 +154,6 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
-
-// ============================================
-// УПРАВЛЕНИЕ КОРЗИНОЙ
-// ============================================
 
 function updateQuantity(dish, delta) {
   let cart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -211,7 +179,6 @@ function updateQuantity(dish, delta) {
     showNotice('Добавлено в корзину', 'success');
   }
 
-  // Обновляем отображение с сохранением текущего фильтра
   const activeBtn = document.querySelector('.category-btn.active');
   const activeCategory = activeBtn ? activeBtn.innerText : 'Все';
   
@@ -222,10 +189,6 @@ function updateQuantity(dish, delta) {
     renderDishes(filtered);
   }
 }
-
-// ============================================
-// ФИЛЬТРАЦИЯ
-// ============================================
 
 function filterCategory(categoryName) {
   const buttons = document.querySelectorAll('.category-btn');
@@ -244,10 +207,6 @@ function filterCategory(categoryName) {
   }
 }
 
-// ============================================
-// ИНИЦИАЛИЗАЦИЯ
-// ============================================
-
 async function initMenuPage() {
   const sessionValid = await checkSession();
   if (!sessionValid) return;
@@ -255,5 +214,4 @@ async function initMenuPage() {
   await loadMenu();
 }
 
-// Запуск
 initMenuPage();

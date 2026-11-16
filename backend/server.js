@@ -3,11 +3,6 @@ const cors = require('cors');
 
 const DatabaseAdapter = require('./adapters/DatabaseAdapter');
 const OrderFacade = require('./facades/OrderFacade');
-const MenuFacade = require('./facades/MenuFacade');
-const StaffFacade = require('./facades/StaffFacade');
-const AuthFacade = require('./facades/AuthFacade');
-const BranchFacade = require('./facades/BranchFacade');
-const DishFacade = require('./facades/DishFacade');
 
 const app = express();
 
@@ -35,8 +30,6 @@ async function checkSession(req, res, next) {
   }
   
   req.userId = session.user_id;
-  req.userRole = session.role;
-  req.userBranchId = session.branch_id;
   next();
 }
 
@@ -107,7 +100,6 @@ app.post('/api/verify', async (req, res) => {
     res.json({
       success: true,
       userId: user.id,
-      role: user.role,
       token: token
     });
     
@@ -121,8 +113,7 @@ app.post('/api/verify', async (req, res) => {
 app.get('/api/check-session', checkSession, async (req, res) => {
   res.json({ 
     valid: true, 
-    userId: req.userId,
-    role: req.userRole 
+    userId: req.userId
   });
 });
 
@@ -187,51 +178,6 @@ app.get('/api/menu', async (req, res) => {
   }
 });
 
-// Все блюда для сотрудника (включая скрытые в его точке)
-app.get('/api/staff/orders', checkSession, async (req, res) => {
-  try {
-    if (req.userRole !== 'staff') {
-      return res.status(403).json({ error: 'Нет доступа' });
-    }
-    const orders = await DatabaseAdapter.getOrdersByBranch(req.userBranchId);
-    res.json(orders);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-
-// Создание блюда
-app.post('/api/dishes', checkSession, async (req, res) => {
-  try {
-    if (req.userRole !== 'staff') {
-      return res.status(403).json({ error: 'Нет доступа' });
-    }
-    const dish = await DatabaseAdapter.createDishForAllBranches(req.body);
-    res.json(dish);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// Скрыть/показать блюдо в своей точке
-app.patch('/api/dishes/:dishId/availability', checkSession, async (req, res) => {
-  try {
-    if (req.userRole !== 'staff') {
-      return res.status(403).json({ error: 'Нет доступа' });
-    }
-    const { isAvailable } = req.body
-    const dish = await DatabaseAdapter.updateDishAvailabilityInBranch(
-      parseInt(req.params.dishId), 
-      req.userBranchId, 
-      isAvailable
-    );
-    res.json(dish);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
 
 // Создание заказа (клиент)
 app.post('/api/orders', checkSession, async (req, res) => {
@@ -267,61 +213,6 @@ app.get('/api/orders/:userId', checkSession, async (req, res) => {
   }
 });
 
-app.get('/api/menu/all', checkSession, async (req, res) => {
-  try {
-    if (req.userRole !== 'staff') {
-      return res.status(403).json({ error: 'Нет доступа' });
-    }
-    const dishes = await DatabaseAdapter.getAllDishesByBranch(req.userBranchId);
-    res.json(dishes);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// Заказы сотрудника (по его филиалу)
-app.get('/api/staff/orders', checkSession, async (req, res) => {
-  try {
-    if (req.userRole !== 'staff') {
-      return res.status(403).json({ error: 'Нет доступа' });
-    }
-    const orders = await DatabaseAdapter.getOrdersByBranch(req.userBranchId);
-    res.json(orders);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// Обновление статуса заказа (сотрудник)
-app.patch('/api/orders/:orderId/status', checkSession, async (req, res) => {
-  try {
-    if (req.userRole !== 'staff') {
-      return res.status(403).json({ error: 'Нет доступа' });
-    }
-    
-    const { status } = req.body;
-    const validStatuses = ['created', 'cooking', 'ready', 'issued', 'cancelled'];
-    
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({ error: 'Неверный статус' });
-    }
-    
-    // Проверяем, что заказ принадлежит филиалу сотрудника
-    const order = await DatabaseAdapter.getOrderById(parseInt(req.params.orderId));
-    if (!order) {
-      return res.status(404).json({ error: 'Заказ не найден' });
-    }
-    
-    if (order.branch_id !== req.userBranchId) {
-      return res.status(403).json({ error: 'Нет доступа к этому заказу' });
-    }
-    
-    const updatedOrder = await DatabaseAdapter.updateOrderStatus(parseInt(req.params.orderId), status);
-    res.json(updatedOrder);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
 
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Сервер работает', time: new Date().toISOString() });
@@ -338,7 +229,11 @@ app.get('/api/test-user', async (req, res) => {
 });
 
 const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`Server started on port ${PORT}`);
-  console.log(`Test: http://localhost:${PORT}/api/test`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server started on port ${PORT}`);
+    console.log(`Test: http://localhost:${PORT}/api/test`);
+  });
+}
+
+module.exports = app;

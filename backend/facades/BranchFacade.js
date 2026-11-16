@@ -11,14 +11,6 @@ class BranchFacade {
     return branches.find(b => b.id === parseInt(branchId));
   }
   
-  async getStaffBranch(userId) {
-    const user = await DatabaseAdapter.getUserById(userId);
-    if (user && user.role === 'staff' && user.branch_id) {
-      return await this.getBranchById(user.branch_id);
-    }
-    return null;
-  }
-  
   async branchExists(branchId) {
     const branch = await this.getBranchById(branchId);
     return !!branch;

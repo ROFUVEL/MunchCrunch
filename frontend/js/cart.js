@@ -8,23 +8,12 @@ function getUserId() {
   return localStorage.getItem('userId');
 }
 
-function getUserRole() {
-  return localStorage.getItem('role');
-}
-
 function getSelectedBranch() {
   return localStorage.getItem('branchId');
 }
 
 async function checkSession() {
   const token = getAuthToken();
-  const role = getUserRole();
-  
-  
-  if (role === 'staff') {
-    window.location.href = 'staff.html';
-    return false;
-  }
   
   if (!token) {
     window.location.href = 'login.html';

@@ -8,18 +8,8 @@ function getUserId() {
   return localStorage.getItem('userId');
 }
 
-function getUserRole() {
-  return localStorage.getItem('role');
-}
-
 async function checkSession() {
   const token = getAuthToken();
-  const role = getUserRole();
-  
-  if (role === 'staff') {
-    window.location.href = 'staff.html';
-    return false;
-  }
   
   if (!token) {
     window.location.href = 'login.html';
@@ -138,7 +128,7 @@ function getStatusText(status) {
 }
 
 function confirmReceived() {
-  showNotice('Подтвердите получение заказа у сотрудника ресторана', 'info');
+  showNotice('Заказ готов к получению в выбранном ресторане', 'info');
 }
 
 function startAutoRefresh() {

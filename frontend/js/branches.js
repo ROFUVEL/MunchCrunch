@@ -2,12 +2,6 @@ const API_URL = getApiUrl();
 
 async function checkSession() {
   const token = localStorage.getItem('sessionToken');
-  const role = localStorage.getItem('role');
-  
-  if (role === 'staff') {
-    window.location.href = 'staff.html';
-    return false;
-  }
   
   if (!token) {
     window.location.href = 'login.html';

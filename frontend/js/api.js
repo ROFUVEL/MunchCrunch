@@ -8,10 +8,6 @@ function getUserId() {
   return localStorage.getItem('userId');
 }
 
-function getUserRole() {
-  return localStorage.getItem('role');
-}
-
 function getSelectedBranch() {
   return localStorage.getItem('branchId');
 }
@@ -55,23 +51,6 @@ async function getMenu() {
   }
   
   const res = await fetch(`${API_URL}/menu?branchId=${branchId}`);
-  
-  if (!res.ok) {
-    throw new Error('Ошибка загрузки меню');
-  }
-  
-  return res.json();
-}
-
-async function getAllDishes() {
-  const token = getAuthToken();
-  const role = getUserRole();
-  
-  if (role !== 'staff' || !token) {
-    throw new Error('Нет доступа');
-  }
-  
-  const res = await authFetch('/menu/all');
   
   if (!res.ok) {
     throw new Error('Ошибка загрузки меню');
@@ -132,91 +111,11 @@ async function getUserOrders() {
   return res.json();
 }
 
-async function getStaffOrders() {
-  const token = getAuthToken();
-  const role = getUserRole();
-  
-  if (role !== 'staff' || !token) {
-    throw new Error('Нет доступа');
-  }
-  
-  const res = await authFetch('/staff/orders');
-  
-  if (!res.ok) {
-    throw new Error('Ошибка загрузки заказов');
-  }
-  
-  return res.json();
-}
-
-async function updateOrderStatus(orderId, status) {
-  const token = getAuthToken();
-  const role = getUserRole();
-  
-  if (role !== 'staff' || !token) {
-    throw new Error('Нет доступа');
-  }
-  
-  const res = await authFetch(`/orders/${orderId}/status`, {
-    method: 'PATCH',
-    body: JSON.stringify({ status })
-  });
-  
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.error || 'Ошибка обновления статуса');
-  }
-  
-  return res.json();
-}
-
 async function getCategories() {
   const res = await fetch(`${API_URL}/categories`);
   
   if (!res.ok) {
     throw new Error('Ошибка загрузки категорий');
-  }
-  
-  return res.json();
-}
-
-async function createDish(dishData) {
-  const token = getAuthToken();
-  const role = getUserRole();
-  
-  if (role !== 'staff' || !token) {
-    throw new Error('Нет доступа');
-  }
-  
-  const res = await authFetch('/dishes', {
-    method: 'POST',
-    body: JSON.stringify(dishData)
-  });
-  
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.error || 'Ошибка создания блюда');
-  }
-  
-  return res.json();
-}
-
-async function toggleDishAvailability(dishId, isAvailable) {
-  const token = getAuthToken();
-  const role = getUserRole();
-  
-  if (role !== 'staff' || !token) {
-    throw new Error('Нет доступа');
-  }
-  
-  const res = await authFetch(`/dishes/${dishId}/availability`, {
-    method: 'PATCH',
-    body: JSON.stringify({ isAvailable })
-  });
-  
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.error || 'Ошибка обновления');
   }
   
   return res.json();
@@ -255,27 +154,3 @@ async function logout() {
   sessionStorage.clear();
   window.location.href = 'login.html';
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

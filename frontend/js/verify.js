@@ -3,7 +3,6 @@ const API_URL = getApiUrl();
 let currentPhone = null;
 
 async function loadVerifyPage() {
-  // Получаем телефон из sessionStorage (временное хранилище)
   currentPhone = sessionStorage.getItem('verifyPhone');
   
   if (!currentPhone) {
@@ -23,7 +22,6 @@ async function verifyCode() {
     return;
   }
   
-  // Для курсовой просто проверяем на 1234
   if (code !== '1234') {
     showNotice('Неверный код подтверждения', 'error');
     return;
@@ -46,23 +44,15 @@ async function verifyCode() {
       return;
     }
     
-    // Сохраняем данные пользователя
     localStorage.setItem('userId', data.userId);
-    localStorage.setItem('role', data.role);
     localStorage.setItem('userPhone', currentPhone);
     localStorage.setItem('sessionToken', data.token);
     
-    // Очищаем временные данные
     sessionStorage.removeItem('verifyPhone');
     
     showNotice('Вход выполнен успешно!', 'success');
     
-    // Перенаправляем
-    if (data.role === 'staff') {
-      window.location.href = 'staff.html';
-    } else {
-      window.location.href = 'menu.html';
-    }
+    window.location.href = 'menu.html';
     
   } catch (e) {
     showNotice('Ошибка сервера', 'error');

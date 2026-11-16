@@ -26,23 +26,6 @@ class AuthFacade {
     return await DatabaseAdapter.getUserByPhone(phone);
   }
   
-  async isStaff(userId) {
-    const user = await DatabaseAdapter.getUserById(userId);
-    return user && user.role === 'staff';
-  }
-
-  async isClient(userId) {
-    const user = await DatabaseAdapter.getUserById(userId);
-    return user && user.role === 'client';
-  }
-
-  async getStaffBranch(userId) {
-    const user = await DatabaseAdapter.getUserById(userId);
-    if (user && user.role === 'staff') {
-      return user.branch_id;
-    }
-    return null;
-  }
 }
 
 module.exports = new AuthFacade();

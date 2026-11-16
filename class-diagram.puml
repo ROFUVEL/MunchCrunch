@@ -11,22 +11,19 @@ class DatabaseAdapter {
   +getUserById(id)
 
   +getMenu()
-  +createDish(dish)
 
   +getBranches()
 
   +createOrder(userId, branchId, totalPrice)
   +addOrderItem(orderId, dishId, quantity)
   +getUserOrders(userId)
-  +getOrdersByBranch(branchId)
-  +updateOrderStatus(orderId, status)
 }
 
 ' =========================
 ' FACADE LAYER
 ' =========================
 class AuthFacade {
-  +login(phone, isStaff)
+  +login(phone)
 }
 
 class MenuFacade {
@@ -38,18 +35,11 @@ class OrderFacade {
   +getUserOrders(userId)
 }
 
-class StaffFacade {
-  +getMyOrders(userId)
-  +updateOrderStatus(userId, orderId, status)
-}
 
 class BranchFacade {
   +getBranches()
 }
 
-class DishFacade {
-  +createDish(dish)
-}
 
 ' =========================
 ' RELATIONS (Facade -> Adapter)
@@ -57,9 +47,7 @@ class DishFacade {
 AuthFacade --> DatabaseAdapter
 MenuFacade --> DatabaseAdapter
 OrderFacade --> DatabaseAdapter
-StaffFacade --> DatabaseAdapter
 BranchFacade --> DatabaseAdapter
-DishFacade --> DatabaseAdapter
 
 ' =========================
 ' DOMAIN ENTITIES (DB TABLES)
@@ -67,7 +55,6 @@ DishFacade --> DatabaseAdapter
 class User {
   +id
   +phone
-  +role
 }
 
 class Order {

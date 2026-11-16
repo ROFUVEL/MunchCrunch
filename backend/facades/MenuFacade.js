@@ -9,13 +9,6 @@ class MenuFacade {
     return await DatabaseAdapter.getMenuByBranch(parseInt(branchId));
   }
   
-  async getAllMenu(branchId) {
-    if (!branchId) {
-      throw new Error('Филиал не указан');
-    }
-    return await DatabaseAdapter.getAllDishesByBranch(parseInt(branchId));
-  }
-  
   async getDishById(dishId) {
     return await DatabaseAdapter.getDishById(dishId);
   }
