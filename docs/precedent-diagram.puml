@@ -1,0 +1,18 @@
+@startuml
+left to right direction
+skinparam nodesep 40
+
+actor "Пользователь" as user
+boundary "Экран приветствия" as welcome_screen
+boundary "Экран меню" as menu_screen
+boundary "Сообщение об ошибке" as error_screen #red
+
+control "Загрузить меню без входа" as load_menu
+entity "Меню (БД)" as menu_db
+
+user --> welcome_screen : нажимает «Войти как гость»
+welcome_screen --> load_menu
+load_menu <--> menu_db : запрос данных
+load_menu --> menu_screen : успех
+load_menu --> error_screen : ошибка БД
+@enduml
