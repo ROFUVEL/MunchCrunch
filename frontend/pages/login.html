@@ -4,28 +4,6 @@
   <title>Авторизация - MunchCrunch</title>
   <meta charset="UTF-8">
   <link rel="stylesheet" href="../styles/style.css">
-  <style>
-    .header-title {
-        flex-grow: 1;
-        text-align: center;
-        margin: 0;
-        font-size: 24px;
-    }
-    .login-box {
-        max-width: 400px;
-        margin: 50px auto;
-    }
-    .big-input {
-        padding: 13px !important;
-        font-size: 16px;
-    }
-    .big-button {
-        width: 100%;
-        font-size: 26px;
-        padding: 20px 32px;
-        border-radius: 12px;
-    }
-  </style>
 </head>
 <body>
 
@@ -40,7 +18,7 @@
     <div class="card login-box center">
       <input type="text" id="phone" class="big-input" placeholder="Телефон" maxlength="11" 
              oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-      <button type="button" id="login-btn" class="big-button">Войти</button>
+      <button type="button" id="login-btn" class="login-button">Войти</button>
     </div>
   </main>
 

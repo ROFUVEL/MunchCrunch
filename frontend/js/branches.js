@@ -74,8 +74,6 @@ async function loadBranches() {
         const selectedBtn = document.createElement('button');
         selectedBtn.innerText = '✓ Выбрано';
         selectedBtn.disabled = true;
-        selectedBtn.style.background = '#aaa';
-        selectedBtn.style.cursor = 'not-allowed';
         buttonContainer.appendChild(selectedBtn);
       } else {
         const selectBtn = document.createElement('button');

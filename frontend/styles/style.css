@@ -34,7 +34,7 @@ header {
 header h1 {
     margin: 0;
     font-size: 24px;
-    font-weight: 500; 
+    font-weight: 500;
 }
 
 .header-title {
@@ -42,7 +42,7 @@ header h1 {
     text-align: center;
     margin: 0;
     font-size: 24px;
-    font-weight: 500; 
+    font-weight: 500;
 }
 
 nav a {
@@ -156,14 +156,14 @@ input {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    z-index: 10000;        
-    padding: 16px 24px;    
-    border-radius: 8px;    
+    z-index: 10000;
+    padding: 16px 24px;
+    border-radius: 8px;
     color: #fff !important;
     font-weight: bold;
-    min-width: 250px;      
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
-    display: block;        
+    min-width: 250px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    display: block;
 }
 
 .notice--hidden {
@@ -192,4 +192,155 @@ input {
 
 .muted {
     color: #666;
+}
+
+.header-spacer {
+    width: 140px;
+}.center-actions {
+    justify-content: center;
+    gap: 20px;
+}.big-button {
+    font-size: 20px;
+    padding: 20px 32px;
+    border-radius: 12px;
+}.header-nav {
+    display: flex;
+    gap: 15px;
+}.checkout-btn {
+    width: 100%;
+    padding: 15px;
+    font-size: 18px;
+    background: #222;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 20px;
+}.login-box {
+    max-width: 400px;
+    margin: 50px auto;
+}.big-input {
+    padding: 13px !important;
+    font-size: 16px;
+}.login-button {
+    width: 100%;
+    font-size: 26px;
+    padding: 20px 32px;
+    border-radius: 12px;
+}.categories-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}.categories-bar::-webkit-scrollbar {
+    display: none;
+}.category-btn {
+    background: #e6e6e6;
+    color: #222;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0;
+    white-space: nowrap;
+    flex-shrink: 0;
+}.category-btn.active {
+    background: #222;
+    color: #fff;
+}.menu-actions button {
+    margin-right: 8px;
+}.order-status {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
+}.status-created {
+    background-color: #fff3cd;
+    color: #856404;
+}.status-cooking {
+    background-color: #ffe0b2;
+    color: #e65100;
+}.status-ready {
+    background-color: #c8e6c9;
+    color: #2e7d32;
+}.status-issued {
+    background-color: #d1c4e9;
+    color: #4527a0;
+}.status-cancelled {
+    background-color: #ffcdd2;
+    color: #c62828;
+}.order-card h3 {
+    margin: 0 0 10px 0;
+    color: #222;
+}.order-card p {
+    margin: 8px 0;
+}.order-card button {
+    margin-top: 10px;
+}.auto-refresh-hint {
+    text-align: right;
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 15px;
+}.verify-box {
+    max-width: 400px;
+    margin: 50px auto;
+}.code-input {
+    text-align: center;
+    font-size: 32px;
+    letter-spacing: 10px;
+    padding: 15px;
+}.hint {
+    color: #666;
+    font-size: 14px;
+    margin-top: 20px;
+}.actions-spaced {
+    margin-top: 20px;
+}.branch-message {
+    border: 1px solid;
+    border-radius: 8px;
+    padding: 15px;
+}.branch-message-warning {
+    background: #fff3cd;
+    border-color: #ffc107;
+}.branch-message-error {
+    background: #ffebee;
+    border-color: #f44336;
+}.branch-message-text {
+    margin: 10px 0 0;
+}.branch-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 20px;
+    flex-wrap: wrap;
+}.branch-description {
+    flex: 2;
+}.card .branch-title {
+    margin: 0 0 8px;
+}.branch-detail {
+    margin: 5px 0;
+}.branch-actions {
+    flex: 1;
+    text-align: right;
+}.logout-button, .logout-button:hover {
+    background: #8d1e1e;
+}.menu-actions {
+    align-items: center;
+}.dish-quantity {
+    font-weight: bold;
+    margin: 0 10px;
+}.dish-total {
+    margin-left: 12px;
+    font-weight: 500;
+}
+@media (max-width: 600px) {.branch-actions {
+    text-align: left;
+}
 }

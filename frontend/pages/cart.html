@@ -4,29 +4,6 @@
   <title>Корзина - MunchCrunch</title>
   <meta charset="UTF-8">
   <link rel="stylesheet" href="../styles/style.css">
-  <style>
-    .header-title {
-        flex-grow: 1;
-        text-align: center;
-        margin: 0;
-        font-size: 24px;
-    }
-    nav {
-        display: flex;
-        gap: 15px;
-    }
-    .checkout-btn {
-        width: 100%;
-        padding: 15px;
-        font-size: 18px;
-        background: #222;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        margin-top: 20px;
-    }
-  </style>
 </head>
 <body>
 
@@ -35,7 +12,7 @@
   <header>
     <h1>MunchCrunch</h1>
     <h1 class="header-title">Корзина</h1>
-    <nav>
+    <nav class="header-nav">
       <a href="menu.html">Меню</a>
       <a href="cart.html" class="muted">Корзина</a>
       <a href="branches.html">Рестораны</a>
@@ -44,7 +21,7 @@
   </header>
 
   <main class="container">
-    <div id="selected-branch-info" class="card" style="margin-bottom: 20px;"></div>
+    <div id="selected-branch-info" class="card"></div>
 
     <div id="cart"></div>
 

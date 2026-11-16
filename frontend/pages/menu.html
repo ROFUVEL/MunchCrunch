@@ -4,57 +4,6 @@
   <title>Меню - MunchCrunch</title>
   <meta charset="UTF-8">
   <link rel="stylesheet" href="../styles/style.css">
-  <style>
-    .header-title {
-        flex-grow: 1;
-        text-align: center;
-        margin: 0;
-        font-size: 24px;
-    }
-    nav {
-        display: flex;
-        gap: 15px;
-    }
-    
-    .categories-bar {
-        display: flex;
-        gap: 12px;
-        margin-bottom: 24px;
-        overflow-x: auto;
-        scroll-behavior: smooth;
-        padding-bottom: 8px;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-    }
-    .categories-bar::-webkit-scrollbar {
-        display: none;
-    }
-    
-    .category-btn {
-        background: #e6e6e6;
-        color: #222;
-        border: none;
-        padding: 12px 24px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 16px;
-        font-weight: bold;
-        margin: 0;
-        white-space: nowrap;
-        flex-shrink: 0;
-    }
-    .category-btn.active {
-        background: #222;
-        color: #fff;
-    }
-    .actions button {
-        margin-right: 8px;
-    }
-    
-    .muted {
-        color: #666;
-    }
-  </style>
 </head>
 <body>
 
@@ -63,7 +12,7 @@
   <header>
     <h1>MunchCrunch</h1>
     <h1 class="header-title">Меню</h1>
-    <nav>
+    <nav class="header-nav">
       <a href="menu.html" class="muted">Меню</a>
       <a href="cart.html">Корзина</a>
       <a href="branches.html">Рестораны</a>

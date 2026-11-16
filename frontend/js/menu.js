@@ -134,8 +134,7 @@ function renderDishes(dishes) {
 
     const cartItem = cart.find(item => item.dishId === dish.id);
     const actionDiv = document.createElement('div');
-    actionDiv.className = 'actions';
-    actionDiv.style.alignItems = 'center';
+    actionDiv.className = 'actions menu-actions';
 
     if (cartItem) {
       const itemTotalPrice = dish.price * cartItem.quantity;
@@ -147,8 +146,7 @@ function renderDishes(dishes) {
 
       const countSpan = document.createElement('span');
       countSpan.innerText = ` ${cartItem.quantity} шт. `;
-      countSpan.style.fontWeight = 'bold';
-      countSpan.style.margin = '0 10px';
+      countSpan.className = 'dish-quantity';
 
       const plusBtn = document.createElement('button');
       plusBtn.innerText = '+';
@@ -156,9 +154,7 @@ function renderDishes(dishes) {
 
       const priceSpan = document.createElement('span');
       priceSpan.innerText = ` (${itemTotalPrice} ₽)`;
-      priceSpan.className = 'muted';
-      priceSpan.style.marginLeft = '12px';
-      priceSpan.style.fontWeight = '500';
+      priceSpan.className = 'muted dish-total';
 
       actionDiv.appendChild(minusBtn);
       actionDiv.appendChild(countSpan);

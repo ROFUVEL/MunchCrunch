@@ -99,7 +99,7 @@ function renderOrders(orders) {
       ${order.updated_at && order.updated_at !== order.created_at ? 
         `<p class="muted">Последнее обновление: ${formatTime(order.updated_at)}</p>` : ''}
       ${order.status === 'ready' ? 
-        '<button onclick="confirmReceived()" class="secondary" style="margin-top: 10px;">Подтвердить получение</button>' : ''}
+        '<button onclick="confirmReceived()" class="secondary">Подтвердить получение</button>' : ''}
     `;
     container.appendChild(el);
   });

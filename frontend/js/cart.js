@@ -57,10 +57,10 @@ async function loadSelectedBranch() {
   
   if (!branchId) {
     branchInfoDiv.innerHTML = `
-      <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 15px;">
+      <div class="branch-message branch-message-warning">
         <strong>Точка не выбрана</strong>
-        <p style="margin: 10px 0 0 0;">Пожалуйста, выберите ресторан для оформления заказа.</p>
-        <button onclick="window.location.href='branches.html'" style="margin-top: 10px;">Выбрать точку</button>
+        <p class="branch-message-text">Пожалуйста, выберите ресторан для оформления заказа.</p>
+        <button onclick="window.location.href='branches.html'">Выбрать точку</button>
       </div>
     `;
     return false;
@@ -75,14 +75,14 @@ async function loadSelectedBranch() {
     
     if (branch) {
       branchInfoDiv.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: start; gap: 20px; flex-wrap: wrap;">
-          <div style="flex: 2;">
-            <h3 style="margin: 0 0 8px 0;">Выбранная точка</h3>
-            <p style="margin: 5px 0;"><strong>${branch.name}</strong></p>
-            <p style="margin: 5px 0; color: #666;">${branch.address}</p>
-            <p style="margin: 5px 0; color: #666;">${branch.working_hours || 'Часы работы не указаны'}</p>
+        <div class="branch-details">
+          <div class="branch-description">
+            <h3 class="branch-title">Выбранная точка</h3>
+            <p class="branch-detail"><strong>${branch.name}</strong></p>
+            <p class="branch-detail muted">${branch.address}</p>
+            <p class="branch-detail muted">${branch.working_hours || 'Часы работы не указаны'}</p>
           </div>
-          <div style="flex: 1; text-align: right;">
+          <div class="branch-actions">
             <button onclick="window.location.href='branches.html'" class="secondary">Изменить точку</button>
           </div>
         </div>
@@ -90,9 +90,9 @@ async function loadSelectedBranch() {
       return true;
     } else {
       branchInfoDiv.innerHTML = `
-        <div style="background: #ffebee; border: 1px solid #f44336; border-radius: 8px; padding: 15px;">
+        <div class="branch-message branch-message-error">
           <strong>Выбранная точка не найдена</strong>
-          <button onclick="window.location.href='branches.html'" style="margin-top: 10px;">Выбрать точку заново</button>
+          <button onclick="window.location.href='branches.html'">Выбрать точку заново</button>
         </div>
       `;
       return false;
@@ -100,7 +100,7 @@ async function loadSelectedBranch() {
   } catch (e) {
     console.error('Ошибка загрузки точки:', e);
     branchInfoDiv.innerHTML = `
-      <div style="background: #ffebee; border: 1px solid #f44336; border-radius: 8px; padding: 15px;">
+      <div class="branch-message branch-message-error">
         Ошибка загрузки информации о точке
       </div>
     `;

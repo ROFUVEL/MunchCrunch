@@ -37,9 +37,9 @@ function renderProfile(user) {
       <p><strong>Роль:</strong> ${isStaff ? 'Сотрудник' : 'Клиент'}</p>
       ${user.branch_id ? `<p><strong>Филиал:</strong> ${user.branch_id}</p>` : ''}
       
-      <div class="actions" style="margin-top: 20px;">
+      <div class="actions actions-spaced">
         ${!isStaff ? '<button id="view-orders-btn" class="secondary">Мои заказы</button>' : ''}
-        <button id="logout-btn" style="background: #8d1e1e;">Выйти</button>
+        <button id="logout-btn" class="logout-button">Выйти</button>
       </div>
     </div>
   `;
