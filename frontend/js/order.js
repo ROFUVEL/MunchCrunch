@@ -55,8 +55,6 @@ function renderOrders(orders) {
       <p><strong>Дата:</strong> ${formatDate(order.created_at)}</p>
       ${order.updated_at && order.updated_at !== order.created_at ? 
         `<p class="muted">Последнее обновление: ${formatTime(order.updated_at)}</p>` : ''}
-      ${order.status === 'ready' ? 
-        '<button onclick="confirmReceived()" class="secondary">Подтвердить получение</button>' : ''}
     `;
     container.appendChild(el);
   });
@@ -92,10 +90,6 @@ function getStatusText(status) {
     'cancelled': 'Отменен'
   };
   return statuses[status] || status;
-}
-
-function confirmReceived() {
-  showNotice('Заказ готов к получению в выбранном ресторане', 'info');
 }
 
 function startAutoRefresh() {
