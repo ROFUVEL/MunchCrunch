@@ -62,6 +62,11 @@ class DatabaseAdapter {
     return res.rows;
   }
 
+  async getBranchById(branchId) {
+    const res = await pool.query('SELECT * FROM branches WHERE id = $1', [branchId]);
+    return res.rows[0];
+  }
+
   async getDishById(id) {
     const res = await pool.query(
       `SELECT * FROM dishes WHERE id = $1`,

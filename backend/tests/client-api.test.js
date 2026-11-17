@@ -17,7 +17,46 @@ afterAll(async () => {
   await new Promise(resolve => server.close(resolve));
 });
 
-beforeEach(() => jest.resetAllMocks());
+beforeEach(() => {
+  jest.resetAllMocks();
+  DatabaseAdapter.getUserById.mockResolvedValue({ id: 1 });
+  DatabaseAdapter.getBranchById.mockResolvedValue({ id: 1 });
+});
+
+test('Отсутствующий ресторан возвращает 404, существующий с пустым меню — 200', async () => {
+  DatabaseAdapter.getBranchById.mockResolvedValueOnce(null);
+  const missing = await fetch(baseUrl + '/menu?branchId=999');
+  expect(missing.status).toBe(404);
+  DatabaseAdapter.getMenuByBranch.mockResolvedValue([]);
+  const empty = await fetch(baseUrl + '/menu?branchId=1');
+  expect(empty.status).toBe(200);
+  expect(await empty.json()).toEqual([]);
+});
+
+test('История отсутствующего пользователя возвращает 404', async () => {
+  DatabaseAdapter.getUserById.mockResolvedValue(null);
+  const response = await fetch(baseUrl + '/orders/999');
+  expect(response.status).toBe(404);
+  expect(DatabaseAdapter.getUserOrders).not.toHaveBeenCalled();
+});
+
+test.each(['getUserById', 'getBranchById'])(
+  'Оформление возвращает 404 при отсутствии объекта: %s', async method => {
+    DatabaseAdapter[method].mockResolvedValue(null);
+    const response = await fetch(baseUrl + '/orders', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: 1, branchId: 1, items: [{ dishId: 1, quantity: 1 }] })
+    });
+    expect(response.status).toBe(404);
+    expect(DatabaseAdapter.createFullOrder).not.toHaveBeenCalled();
+  }
+);
+
+test('Неизвестный маршрут API возвращает JSON с ошибкой 404', async () => {
+  const response = await fetch(baseUrl + '/unknown');
+  expect(response.status).toBe(404);
+  expect(await response.json()).toEqual({ error: 'Маршрут не найден' });
+});
 
 test('Созданный заказ можно отменить', async () => {
   DatabaseAdapter.getOrderById.mockResolvedValue({ id: 10, user_id: 1, status: 'created' });
@@ -232,7 +271,7 @@ test('Order creation uses the user ID from the request body', async () => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userId: 2, branchId: 1, items: [{ dishId: 1, quantity: 1 }] })
   });
-  expect(response.status).toBe(200);
+  expect(response.status).toBe(201);
   expect(DatabaseAdapter.createFullOrder).toHaveBeenCalledWith(2, 1, expect.any(Array));
 });
 

@@ -16,6 +16,12 @@ class OrderFacade {
     if (!isValidOrderItems(items)) {
       throw badRequest('Некорректные позиции заказа');
     }
+    if (!await DatabaseAdapter.getUserById(userId)) {
+      throw httpError(404, 'Пользователь не найден');
+    }
+    if (!await DatabaseAdapter.getBranchById(branchId)) {
+      throw httpError(404, 'Ресторан не найден');
+    }
     
     // Используем те же доступные блюда и цены, которые показываются в меню ресторана.
     const dishes = await DatabaseAdapter.getMenuByBranch(branchId);

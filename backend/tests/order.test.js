@@ -5,7 +5,11 @@ jest.mock('../adapters/DatabaseAdapter');
 
 describe('OrderFacade', () => {
 
-  beforeEach(() => jest.resetAllMocks());
+  beforeEach(() => {
+    jest.resetAllMocks();
+    DatabaseAdapter.getUserById.mockResolvedValue({ id: 1 });
+    DatabaseAdapter.getBranchById.mockResolvedValue({ id: 1 });
+  });
 
   test.each([0, -1, 1.5, '2', true, null, 2147483648])(
     'Количество %j отклоняется до загрузки меню', async (quantity) => {

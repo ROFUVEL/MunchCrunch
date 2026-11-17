@@ -123,6 +123,9 @@ app.get('/api/menu', async (req, res) => {
     if (!isPositiveInteger(branchId)) {
       return res.status(400).json({ error: 'Некорректный ID ресторана' });
     }
+    if (!await DatabaseAdapter.getBranchById(branchId)) {
+      return res.status(404).json({ error: 'Ресторан не найден' });
+    }
     const dishes = await DatabaseAdapter.getMenuByBranch(branchId);
     res.json(dishes);
   } catch (e) {
@@ -148,7 +151,7 @@ app.post('/api/orders', async (req, res) => {
     }
     
     const order = await OrderFacade.createOrder(userId, branchId, items);
-    res.json(order);
+    res.status(201).json(order);
   } catch (e) {
     sendApiError(e, res);
   }
@@ -160,6 +163,9 @@ app.get('/api/orders/:userId', async (req, res) => {
     const userId = parseId(req.params.userId);
     if (!isPositiveInteger(userId)) {
       return res.status(400).json({ error: 'Некорректный ID пользователя' });
+    }
+    if (!await DatabaseAdapter.getUserById(userId)) {
+      return res.status(404).json({ error: 'Пользователь не найден' });
     }
     const orders = await DatabaseAdapter.getUserOrders(userId);
     res.json(orders);
@@ -191,6 +197,10 @@ app.post('/api/users/:userId/orders/:orderId/cancel', async (req, res) => {
   } catch (e) {
     sendApiError(e, res);
   }
+});
+
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'Маршрут не найден' });
 });
 
 const PORT = 3000;
