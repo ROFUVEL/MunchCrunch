@@ -19,6 +19,50 @@ afterAll(async () => {
 
 beforeEach(() => jest.resetAllMocks());
 
+test('Недоступное блюдо возвращает 400 с понятным сообщением', async () => {
+  DatabaseAdapter.getMenuByBranch.mockResolvedValue([]);
+  const response = await fetch(baseUrl + '/orders', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: 1, branchId: 1, items: [{ dishId: 1, quantity: 1 }] })
+  });
+  expect(response.status).toBe(400);
+  expect((await response.json()).error).toContain('недоступно');
+  expect(DatabaseAdapter.createFullOrder).not.toHaveBeenCalled();
+});
+
+test('Внутренняя ошибка записывается в консоль, но не раскрывается клиенту', async () => {
+  const error = new Error('password=secret; SQL SELECT * FROM users');
+  DatabaseAdapter.getBranches.mockRejectedValue(error);
+  const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    const response = await fetch(baseUrl + '/branches');
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({ error: 'Ошибка сервера. Попробуйте позже.' });
+    expect(log).toHaveBeenCalledWith('API error:', error);
+  } finally {
+    log.mockRestore();
+  }
+});
+
+test('Некорректный JSON возвращает 400 в формате JSON', async () => {
+  const response = await fetch(baseUrl + '/orders', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{'
+  });
+  expect(response.status).toBe(400);
+  expect(await response.json()).toEqual({ error: 'Некорректный JSON в запросе' });
+});
+
+test('Несуществующая ссылка в заказе возвращает 400 без подробностей БД', async () => {
+  DatabaseAdapter.getMenuByBranch.mockResolvedValue([{ id: 1, price: 100 }]);
+  DatabaseAdapter.createFullOrder.mockRejectedValue({ code: '23503', detail: 'users constraint' });
+  const response = await fetch(baseUrl + '/orders', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: 100, branchId: 1, items: [{ dishId: 1, quantity: 1 }] })
+  });
+  expect(response.status).toBe(400);
+  expect((await response.json()).error).not.toContain('constraint');
+});
+
 test.each(['0', '-1', '1.5', '1abc', '2147483648', 'true'])(
   'Некорректный ID %s отклоняется до обращения к БД', async (id) => {
     for (const route of [`/users/${id}`, `/orders/${id}`, `/menu?branchId=${id}`]) {

@@ -1,19 +1,20 @@
 const DatabaseAdapter = require('../adapters/DatabaseAdapter');
 const { isPositiveInteger, isValidOrderItems } = require('../validation');
+const { badRequest } = require('../errors');
 
 class OrderFacade {
   
   async createOrder(userId, branchId, items) {
     
     if (!isPositiveInteger(userId) || !isPositiveInteger(branchId)) {
-      throw new Error('Некорректные данные заказа');
+      throw badRequest('Некорректные данные заказа');
     }
 
     if (!Array.isArray(items) || items.length === 0) {
-      throw new Error('Корзина пуста');
+      throw badRequest('Корзина пуста');
     }
     if (!isValidOrderItems(items)) {
-      throw new Error('Некорректные позиции заказа');
+      throw badRequest('Некорректные позиции заказа');
     }
     
     // Используем те же доступные блюда и цены, которые показываются в меню ресторана.
@@ -27,7 +28,7 @@ class OrderFacade {
 
       const dish = dishById.get(dishId);
       if (!dish) {
-        throw new Error(`Блюдо недоступно в выбранном ресторане: ${dishId}`);
+        throw badRequest(`Блюдо недоступно в выбранном ресторане: ${dishId}`);
       }
 
       const price = Number(dish.price);

@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const { sendApiError } = require('./errors');
 const { isValidPhone, isPositiveInteger, parseId, isValidOrderItems } = require('./validation');
 
 const DatabaseAdapter = require('./adapters/DatabaseAdapter');
@@ -40,8 +41,7 @@ app.post('/api/login', async (req, res) => {
     });
     
   } catch (e) {
-    console.error('Login error:', e);
-    res.status(500).json({ error: e.message });
+    sendApiError(e, res);
   }
 });
 
@@ -77,8 +77,7 @@ app.post('/api/verify', async (req, res) => {
     });
     
   } catch (e) {
-    console.error('Verify error:', e);
-    res.status(500).json({ error: e.message });
+    sendApiError(e, res);
   }
 });
 
@@ -94,7 +93,7 @@ app.get('/api/users/:userId', async (req, res) => {
     }
     res.json(user);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    sendApiError(e, res);
   }
 });
 
@@ -104,7 +103,7 @@ app.get('/api/categories', async (req, res) => {
     const categories = await DatabaseAdapter.getCategories();
     res.json(categories);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    sendApiError(e, res);
   }
 });
 
@@ -113,7 +112,7 @@ app.get('/api/branches', async (req, res) => {
   try {
     res.json(await DatabaseAdapter.getBranches());
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    sendApiError(e, res);
   }
 });
 
@@ -127,7 +126,7 @@ app.get('/api/menu', async (req, res) => {
     const dishes = await DatabaseAdapter.getMenuByBranch(branchId);
     res.json(dishes);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    sendApiError(e, res);
   }
 });
 
@@ -151,8 +150,7 @@ app.post('/api/orders', async (req, res) => {
     const order = await OrderFacade.createOrder(userId, branchId, items);
     res.json(order);
   } catch (e) {
-    console.error('Order creation error:', e);
-    res.status(500).json({ error: e.message });
+    sendApiError(e, res);
   }
 });
 
@@ -166,7 +164,7 @@ app.get('/api/orders/:userId', async (req, res) => {
     const orders = await DatabaseAdapter.getUserOrders(userId);
     res.json(orders);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    sendApiError(e, res);
   }
 });
 
@@ -176,6 +174,10 @@ app.get('/api/test', (req, res) => {
 });
 
 const PORT = 3000;
+app.use((error, req, res, next) => {
+  sendApiError(error, res);
+});
+
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);
