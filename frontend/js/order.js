@@ -77,7 +77,7 @@ async function loadUserOrders() {
   }
   
   try {
-    const res = await fetch(`${API_URL}/orders/${userId}`);
+    const res = await fetch(`${API_URL}/users/${userId}/orders`);
     
     if (!res.ok) {
       const error = await res.json().catch(() => ({}));

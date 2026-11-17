@@ -23,6 +23,40 @@ beforeEach(() => {
   DatabaseAdapter.getBranchById.mockResolvedValue({ id: 1 });
 });
 
+test('Один заказ возвращается по вложенному маршруту, сумма остаётся строкой', async () => {
+  const order = {
+    id: 10, user_id: 1, branch_id: 2, status: 'created', total_price: '620.00',
+    created_at: '2026-11-17T10:00:00.000Z', updated_at: '2026-11-17T10:00:00.000Z'
+  };
+  DatabaseAdapter.getOrderById.mockResolvedValue(order);
+  const response = await fetch(baseUrl + '/users/1/orders/10');
+  expect(response.status).toBe(200);
+  expect(await response.json()).toEqual(order);
+  expect(DatabaseAdapter.getOrderById).toHaveBeenCalledWith(10);
+});
+
+test.each([
+  ['/users/0/orders/10', null, 400],
+  ['/users/1/orders/abc', null, 400],
+  ['/users/1/orders/10', null, 404],
+  ['/users/1/orders/10', { id: 10, user_id: 2 }, 403]
+])('Один заказ: %s возвращает корректную ошибку', async (url, order, status) => {
+  DatabaseAdapter.getOrderById.mockResolvedValue(order);
+  const response = await fetch(baseUrl + url);
+  expect(response.status).toBe(status);
+  expect(await response.json()).toEqual({ error: expect.any(String) });
+});
+
+test('Старый адрес истории удалён, новый возвращает пустой список', async () => {
+  DatabaseAdapter.getUserOrders.mockResolvedValue([]);
+  const oldResponse = await fetch(baseUrl + '/orders/1');
+  expect(oldResponse.status).toBe(404);
+  expect(await oldResponse.json()).toEqual({ error: 'Маршрут не найден' });
+  const response = await fetch(baseUrl + '/users/1/orders');
+  expect(response.status).toBe(200);
+  expect(await response.json()).toEqual([]);
+});
+
 test.each([undefined, null, 1234, true, {}, [], '', '123', '12345', 'abcd', '12 4', '1234\n'])(
   'Некорректный формат кода %j возвращает 400', async code => {
     const response = await fetch(baseUrl + '/verify', {
@@ -57,7 +91,7 @@ test('Отсутствующий ресторан возвращает 404, су
 
 test('История отсутствующего пользователя возвращает 404', async () => {
   DatabaseAdapter.getUserById.mockResolvedValue(null);
-  const response = await fetch(baseUrl + '/orders/999');
+  const response = await fetch(baseUrl + '/users/999/orders');
   expect(response.status).toBe(404);
   expect(DatabaseAdapter.getUserOrders).not.toHaveBeenCalled();
 });
@@ -185,7 +219,7 @@ test('Несуществующая ссылка в заказе возвраща
 
 test.each(['0', '-1', '1.5', '1abc', '2147483648', 'true'])(
   'Некорректный ID %s отклоняется до обращения к БД', async (id) => {
-    for (const route of [`/users/${id}`, `/orders/${id}`, `/menu?branchId=${id}`]) {
+    for (const route of [`/users/${id}`, `/users/${id}/orders`, `/menu?branchId=${id}`]) {
       const response = await fetch(baseUrl + route);
       expect(response.status).toBe(400);
     }
@@ -261,7 +295,7 @@ test('Меню выбранного ресторана доступно клие
 
 test('Orders are available by user ID without a token', async () => {
   DatabaseAdapter.getUserOrders.mockResolvedValue([{ id: 10, user_id: 1 }]);
-  const response = await fetch(baseUrl + '/orders/1');
+  const response = await fetch(baseUrl + '/users/1/orders');
   expect(response.status).toBe(200);
   expect(await response.json()).toEqual([{ id: 10, user_id: 1 }]);
   expect(DatabaseAdapter.getUserOrders).toHaveBeenCalledWith(1);

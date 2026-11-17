@@ -158,7 +158,7 @@ app.post('/api/orders', async (req, res) => {
 });
 
 // Заказы пользователя (клиент)
-app.get('/api/orders/:userId', async (req, res) => {
+app.get('/api/users/:userId/orders', async (req, res) => {
   try {
     const userId = parseId(req.params.userId);
     if (!isPositiveInteger(userId)) {
@@ -174,6 +174,16 @@ app.get('/api/orders/:userId', async (req, res) => {
   }
 });
 
+
+app.get('/api/users/:userId/orders/:orderId', async (req, res) => {
+  try {
+    const userId = parseId(req.params.userId);
+    const orderId = parseId(req.params.orderId);
+    res.json(await OrderFacade.getUserOrder(orderId, userId));
+  } catch (e) {
+    sendApiError(e, res);
+  }
+});
 
 app.get('/api/users/:userId/orders/:orderId/items', async (req, res) => {
   try {

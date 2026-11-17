@@ -88,7 +88,7 @@ async function getUserOrders() {
     throw new Error('Не авторизован');
   }
   
-  const res = await apiFetch(`/orders/${userId}`);
+  const res = await apiFetch(`/users/${userId}/orders`);
   
   if (!res.ok) {
     throw new Error('Ошибка загрузки заказов');

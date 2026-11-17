@@ -88,17 +88,7 @@ class OrderFacade {
   }
   
   async cancelOrder(orderId, userId) {
-    if (!isPositiveInteger(orderId) || !isPositiveInteger(userId)) {
-      throw badRequest('Некорректный ID пользователя или заказа');
-    }
-    const order = await DatabaseAdapter.getOrderById(orderId);
-    if (!order) {
-      throw httpError(404, 'Заказ не найден');
-    }
-    
-    if (order.user_id !== userId) {
-      throw httpError(403, 'Нет доступа к этому заказу');
-    }
+    const order = await this.getUserOrder(orderId, userId);
     
     if (order.status !== 'created') {
       throw httpError(409, 'Нельзя отменить заказ в статусе: ' + order.status);
@@ -111,13 +101,18 @@ class OrderFacade {
     return cancelledOrder;
   }
 
-  async getUserOrderItems(orderId, userId) {
+  async getUserOrder(orderId, userId) {
     if (!isPositiveInteger(orderId) || !isPositiveInteger(userId)) {
       throw badRequest('Некорректный ID пользователя или заказа');
     }
     const order = await DatabaseAdapter.getOrderById(orderId);
     if (!order) throw httpError(404, 'Заказ не найден');
     if (order.user_id !== userId) throw httpError(403, 'Нет доступа к этому заказу');
+    return order;
+  }
+
+  async getUserOrderItems(orderId, userId) {
+    await this.getUserOrder(orderId, userId);
     return DatabaseAdapter.getOrderItems(orderId);
   }
   
