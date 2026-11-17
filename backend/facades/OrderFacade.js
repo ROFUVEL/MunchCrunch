@@ -12,11 +12,10 @@ class OrderFacade {
       throw new Error('Корзина пуста');
     }
     
-    const dishIds = items.map(i => i && i.dishId).filter(Boolean);
-    const dishes = await DatabaseAdapter.getDishesByIds(dishIds);
+    // Используем те же доступные блюда и цены, которые показываются в меню ресторана.
+    const dishes = await DatabaseAdapter.getMenuByBranch(branchId);
     const dishById = new Map(dishes.map(d => [d.id, d]));
 
-    let totalPrice = 0;
     const orderItems = [];
 
     for (const item of items) {
@@ -29,21 +28,13 @@ class OrderFacade {
 
       const dish = dishById.get(dishId);
       if (!dish) {
-        throw new Error(`Блюдо не найдено: ${dishId}`);
-      }
-
-      const isAvailable = await DatabaseAdapter.getDishAvailabilityInBranch(dishId, branchId);
-      if (!isAvailable) {
-        throw new Error(`Блюдо "${dish.name}" недоступно в выбранном ресторане`);
+        throw new Error(`Блюдо недоступно в выбранном ресторане: ${dishId}`);
       }
 
       const price = Number(dish.price);
       if (!Number.isFinite(price)) {
         throw new Error(`Некорректная цена блюда: ${dishId}`);
       }
-
-      const itemTotal = price * quantity;
-      totalPrice += itemTotal;
 
       orderItems.push({
         dishId: dishId,

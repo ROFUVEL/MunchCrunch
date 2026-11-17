@@ -9,14 +9,13 @@ describe('OrderFacade', () => {
 
   test('Создание заказа', async () => {
 
-    DatabaseAdapter.getDishesByIds.mockResolvedValue([
+    DatabaseAdapter.getMenuByBranch.mockResolvedValue([
       {
         id: 1,
         price: 500
       }
     ]);
 
-    DatabaseAdapter.getDishAvailabilityInBranch.mockResolvedValue(true);
     DatabaseAdapter.createFullOrder.mockResolvedValue({
       id: 1,
       total_price: 1000
@@ -43,16 +42,30 @@ describe('OrderFacade', () => {
   });
 
   test('Недоступное блюдо нельзя заказать', async () => {
-    DatabaseAdapter.getDishesByIds.mockResolvedValue([
-      { id: 1, name: 'Блюдо', price: 500 }
-    ]);
-    DatabaseAdapter.getDishAvailabilityInBranch.mockResolvedValue(false);
+    DatabaseAdapter.getMenuByBranch.mockResolvedValue([]);
 
     await expect(OrderFacade.createOrder(1, 1, [
       { dishId: 1, quantity: 1 }
     ])).rejects.toThrow('недоступно');
     expect(DatabaseAdapter.createFullOrder).not.toHaveBeenCalled();
   });
+
+  test.each(['350.00', '0.00'])(
+    'Заказ использует цену ресторана %s и игнорирует цену из браузера',
+    async (price) => {
+      DatabaseAdapter.getMenuByBranch.mockResolvedValue([{ id: 1, price }]);
+      DatabaseAdapter.createFullOrder.mockResolvedValue({ id: 1 });
+
+      await OrderFacade.createOrder(1, 2, [
+        { dishId: 1, quantity: 2, price: 999 }
+      ]);
+
+      expect(DatabaseAdapter.getMenuByBranch).toHaveBeenCalledWith(2);
+      expect(DatabaseAdapter.createFullOrder).toHaveBeenCalledWith(
+        1, 2, [{ dishId: 1, quantity: 2, price: Number(price) }]
+      );
+    }
+  );
 
   test('Отмена чужого заказа запрещена', async () => {
     DatabaseAdapter.getOrderById.mockResolvedValue({

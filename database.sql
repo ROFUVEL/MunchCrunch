@@ -97,7 +97,7 @@ INSERT INTO dishes (name, description, price, category_id) VALUES
     ('Брауни', 'Шоколадный десерт с насыщенным вкусом какао.', 190, 4),
     ('Мороженое', 'Ванильное мороженое, 100 г.', 110, 4);
 
--- Equal prices across branches: the current order facade uses dishes.price.
+-- Seed branches use base prices; price_override can set a branch-specific price.
 INSERT INTO branch_dishes (branch_id, dish_id, is_available)
 SELECT b.id, d.id,
        NOT ((b.id = 2 AND d.id = 10) OR (b.id = 3 AND d.id IN (6, 12)))

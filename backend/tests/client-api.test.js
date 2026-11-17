@@ -68,8 +68,7 @@ test.each([
 
 
 test('Order creation uses the user ID from the request body', async () => {
-  DatabaseAdapter.getDishesByIds.mockResolvedValue([{ id: 1, price: 100 }]);
-  DatabaseAdapter.getDishAvailabilityInBranch.mockResolvedValue(true);
+  DatabaseAdapter.getMenuByBranch.mockResolvedValue([{ id: 1, price: 100 }]);
   DatabaseAdapter.createFullOrder.mockResolvedValue({ id: 10, user_id: 2 });
   const response = await fetch(baseUrl + '/orders', {
     method: 'POST',
