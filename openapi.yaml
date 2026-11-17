@@ -1,0 +1,661 @@
+openapi: 3.0.4
+info:
+  title: MunchCrunch API
+  version: 1.0.0
+  description: |
+    Учебное API заказа еды в сети ресторанов.
+
+    Сценарий: запросить код через /login, подтвердить его через /verify,
+    выбрать ресторан, получить меню и создать заказ.
+
+    Сессии и токены отсутствуют. userId передаётся клиентом и не подтверждает
+    личность пользователя. Проверка принадлежности заказа сравнивает его владельца
+    только с переданным userId. Все операции доступны без авторизации.
+
+    Доставка SMS не реализована. Демонстрационный код — 1234, действует 5 минут
+    и используется один раз. Повторный POST /login создаёт новый код.
+
+    Цены и суммы в ответах — строки в рублях с двумя знаками после точки.
+    Цену заказа определяет сервер по меню выбранного ресторана.
+    Ошибки возвращаются в JSON с полем error.
+servers:
+  - url: http://localhost:3000/api
+    description: Локальный учебный сервер
+security: []
+tags:
+  - name: Вход
+    description: Демонстрационный вход по телефону и коду
+  - name: Пользователи
+    description: Профиль пользователя
+  - name: Меню
+    description: Рестораны, категории и доступные блюда
+  - name: Заказы
+    description: Создание, история, состав и отмена заказов
+  - name: Сервис
+    description: Проверка доступности API
+
+paths:
+  /login:
+    post:
+      tags: [Вход]
+      operationId: requestLoginCode
+      summary: Запросить или повторно отправить код входа
+      description: |
+        Создаёт пользователя, если телефон ещё не зарегистрирован, и сохраняет код.
+        Предыдущие неиспользованные коды этого телефона удаляются.
+        В учебной реализации SMS не отправляется, код всегда 1234.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              phone: '79999999999'
+      responses:
+        '200':
+          description: Код создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              example:
+                success: true
+                message: Код подтверждения отправлен
+                phone: '79999999999'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /verify:
+    post:
+      tags: [Вход]
+      operationId: verifyLoginCode
+      summary: Подтвердить код и получить ID пользователя
+      description: Проверяет неиспользованный код и срок его действия. Токен не выдаётся.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyRequest'
+            example:
+              phone: '79999999999'
+              code: '1234'
+      responses:
+        '200':
+          description: Вход подтверждён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyResponse'
+              example:
+                success: true
+                userId: 1
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Код неверен, просрочен, уже использован или не был запрошен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: Неверный или просроченный код
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /users/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [Пользователи]
+      operationId: getUserProfile
+      summary: Получить профиль пользователя
+      responses:
+        '200':
+          description: Профиль найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /branches:
+    get:
+      tags: [Меню]
+      operationId: getBranches
+      summary: Получить список ресторанов
+      description: Рестораны отсортированы по ID по возрастанию. При отсутствии возвращается [].
+      responses:
+        '200':
+          description: Список ресторанов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Branch'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /categories:
+    get:
+      tags: [Меню]
+      operationId: getCategories
+      summary: Получить категории блюд
+      description: Категории отсортированы по названию. При отсутствии возвращается [].
+      responses:
+        '200':
+          description: Список категорий
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /menu:
+    get:
+      tags: [Меню]
+      operationId: getBranchMenu
+      summary: Получить доступное меню ресторана
+      description: |
+        Возвращает только доступные блюда, отсортированные по ID.
+        price — цена ресторана, если она задана; иначе базовая цена блюда.
+        Для существующего ресторана без доступных блюд возвращается [].
+      parameters:
+        - name: branchId
+          in: query
+          required: true
+          description: ID выбранного ресторана
+          schema:
+            $ref: '#/components/schemas/PositiveInteger'
+          example: 1
+      responses:
+        '200':
+          description: Меню ресторана
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MenuDish'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /orders:
+    post:
+      tags: [Заказы]
+      operationId: createOrder
+      summary: Создать заказ
+      description: |
+        Проверяет пользователя, ресторан и доступность блюд.
+        Повторяющиеся dishId объединяются сложением quantity. Суммарное количество
+        одного блюда не должно превышать 2147483647.
+        Цены клиента не используются: сервер берёт текущие цены меню ресторана,
+        сохраняет их в позициях заказа и рассчитывает общую сумму.
+        Дальнейшее изменение цен меню не меняет сохранённые цены заказа.
+        Заказ создаётся в статусе created. Заказ и его позиции сохраняются одной транзакцией.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+            example:
+              userId: 1
+              branchId: 1
+              items:
+                - dishId: 1
+                  quantity: 2
+      responses:
+        '201':
+          description: Заказ создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /users/{userId}/orders:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [Заказы]
+      operationId: getUserOrders
+      summary: Получить историю заказов пользователя
+      description: |
+        Новые заказы идут первыми (по created_at по убыванию).
+        Для существующего пользователя без заказов возвращается [].
+        Позиции заказа загружаются отдельно через маршрут /items.
+      responses:
+        '200':
+          description: История заказов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /users/{userId}/orders/{orderId}:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+      - $ref: '#/components/parameters/OrderId'
+    get:
+      tags: [Заказы]
+      operationId: getUserOrder
+      summary: Получить один заказ пользователя
+      description: Возвращает сведения о заказе без позиций. Позиции доступны через /items.
+      responses:
+        '200':
+          description: Заказ найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /users/{userId}/orders/{orderId}/items:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+      - $ref: '#/components/parameters/OrderId'
+    get:
+      tags: [Заказы]
+      operationId: getUserOrderItems
+      summary: Получить состав заказа
+      description: |
+        Возвращает сохранённую цену единицы блюда и количество.
+        name — текущее название блюда из справочника, цена — на момент заказа.
+        Порядок позиций не гарантируется.
+      responses:
+        '200':
+          description: Позиции заказа
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /users/{userId}/orders/{orderId}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+      - $ref: '#/components/parameters/OrderId'
+    post:
+      tags: [Заказы]
+      operationId: cancelUserOrder
+      summary: Отменить созданный заказ
+      description: |
+        Тело запроса не требуется. Отмена допустима только из статуса created.
+        Возвращает заказ со статусом cancelled и обновлённым updated_at.
+        Повторная отмена возвращает 409. Заказ и позиции не удаляются.
+      responses:
+        '200':
+          description: Заказ отменён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+              example:
+                id: 1
+                user_id: 1
+                branch_id: 1
+                status: cancelled
+                total_price: '580.00'
+                created_at: '2026-11-17T10:00:00.000Z'
+                updated_at: '2026-11-17T10:01:00.000Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Статус заказа не допускает отмену или изменился во время отмены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: 'Нельзя отменить заказ в статусе: cooking'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /test:
+    get:
+      tags: [Сервис]
+      operationId: checkApi
+      summary: Проверить доступность API
+      description: Проверяет ответ приложения. Подключение к базе данных не проверяет.
+      responses:
+        '200':
+          description: Приложение отвечает
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message, time]
+                properties:
+                  message:
+                    type: string
+                    example: Сервер работает
+                  time:
+                    type: string
+                    format: date-time
+                    example: '2026-11-17T10:00:00.000Z'
+
+components:
+  parameters:
+    UserId:
+      name: userId
+      in: path
+      required: true
+      description: ID пользователя, переданный клиентом; не является подтверждением личности
+      schema:
+        $ref: '#/components/schemas/PositiveInteger'
+      example: 1
+    OrderId:
+      name: orderId
+      in: path
+      required: true
+      description: ID заказа
+      schema:
+        $ref: '#/components/schemas/PositiveInteger'
+      example: 1
+
+  responses:
+    BadRequest:
+      description: |
+        Некорректный JSON, отсутствующие или неверные параметры, пустая корзина,
+        недоступное блюдо или недопустимое суммарное количество.
+        Также возвращается, если связанный объект удалён во время сохранения заказа.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Некорректный ID пользователя
+    Forbidden:
+      description: Заказ не принадлежит переданному userId
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Нет доступа к этому заказу
+    NotFound:
+      description: Запрошенный пользователь, ресторан или заказ не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Заказ не найден
+    ServerError:
+      description: Внутренняя ошибка. Технические подробности остаются в журнале сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Ошибка сервера. Попробуйте позже.
+
+  schemas:
+    PositiveInteger:
+      type: integer
+      format: int32
+      minimum: 1
+      maximum: 2147483647
+      example: 1
+    Money:
+      type: string
+      description: Неотрицательная сумма в рублях, два знака после точки, без символа валюты
+      pattern: '^[0-9]{1,8}\.[0-9]{2}$'
+      example: '310.50'
+    Phone:
+      type: string
+      description: Номер из 10 или 11 цифр без пробелов и знака плюс
+      minLength: 10
+      maxLength: 11
+      pattern: '^[0-9]{10,11}$'
+      example: '79999999999'
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          example: Некорректные данные запроса
+    LoginRequest:
+      type: object
+      required: [phone]
+      properties:
+        phone:
+          $ref: '#/components/schemas/Phone'
+    LoginResponse:
+      type: object
+      required: [success, message, phone]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        message:
+          type: string
+          example: Код подтверждения отправлен
+        phone:
+          $ref: '#/components/schemas/Phone'
+    VerifyRequest:
+      type: object
+      required: [phone, code]
+      properties:
+        phone:
+          $ref: '#/components/schemas/Phone'
+        code:
+          type: string
+          minLength: 4
+          maxLength: 4
+          pattern: '^[0-9]{4}$'
+          example: '1234'
+    VerifyResponse:
+      type: object
+      required: [success, userId]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        userId:
+          $ref: '#/components/schemas/PositiveInteger'
+    User:
+      type: object
+      required: [id, phone, role, created_at]
+      properties:
+        id:
+          $ref: '#/components/schemas/PositiveInteger'
+        phone:
+          $ref: '#/components/schemas/Phone'
+        role:
+          type: string
+          enum: [client]
+        created_at:
+          type: string
+          format: date-time
+      example:
+        id: 1
+        phone: '79999999999'
+        role: client
+        created_at: '2026-11-17T10:00:00.000Z'
+    Branch:
+      type: object
+      required: [id, name, address, working_hours]
+      properties:
+        id:
+          $ref: '#/components/schemas/PositiveInteger'
+        name:
+          type: string
+          maxLength: 120
+          example: MunchCrunch — Центр
+        address:
+          type: string
+          example: Красноярск, проспект Мира, 10
+        working_hours:
+          type: string
+          maxLength: 100
+          example: Ежедневно 10:00–22:00
+    Category:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          $ref: '#/components/schemas/PositiveInteger'
+        name:
+          type: string
+          maxLength: 100
+          example: Бургеры
+    MenuDish:
+      type: object
+      required: [id, name, description, price, image_url, category_id, category_name, is_available]
+      properties:
+        id:
+          $ref: '#/components/schemas/PositiveInteger'
+        name:
+          type: string
+          maxLength: 120
+          example: Классический бургер
+        description:
+          type: string
+          example: Говяжья котлета, салат, томат и фирменный соус.
+        price:
+          $ref: '#/components/schemas/Money'
+        image_url:
+          type: string
+          nullable: true
+          description: Адрес изображения или null, если изображения нет
+          example: null
+        category_id:
+          $ref: '#/components/schemas/PositiveInteger'
+        category_name:
+          type: string
+          example: Бургеры
+        is_available:
+          type: boolean
+          enum: [true]
+          description: Этот маршрут возвращает только доступные блюда
+    CreateOrderRequest:
+      type: object
+      required: [userId, branchId, items]
+      properties:
+        userId:
+          $ref: '#/components/schemas/PositiveInteger'
+        branchId:
+          $ref: '#/components/schemas/PositiveInteger'
+        items:
+          type: array
+          minItems: 1
+          description: Повторяющиеся dishId объединяются на сервере
+          items:
+            $ref: '#/components/schemas/CreateOrderItem'
+    CreateOrderItem:
+      type: object
+      required: [dishId, quantity]
+      description: Цену передавать не требуется; дополнительные поля, включая price, игнорируются
+      properties:
+        dishId:
+          $ref: '#/components/schemas/PositiveInteger'
+        quantity:
+          $ref: '#/components/schemas/PositiveInteger'
+    Order:
+      type: object
+      required: [id, user_id, branch_id, total_price, status, created_at, updated_at]
+      properties:
+        id:
+          $ref: '#/components/schemas/PositiveInteger'
+        user_id:
+          $ref: '#/components/schemas/PositiveInteger'
+        branch_id:
+          $ref: '#/components/schemas/PositiveInteger'
+        total_price:
+          $ref: '#/components/schemas/Money'
+        status:
+          type: string
+          enum: [created, cooking, ready, issued, cancelled]
+          description: Создан, готовится, готов к выдаче, получен или отменён
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      example:
+        id: 1
+        user_id: 1
+        branch_id: 1
+        total_price: '580.00'
+        status: created
+        created_at: '2026-11-17T10:00:00.000Z'
+        updated_at: '2026-11-17T10:00:00.000Z'
+    OrderItem:
+      type: object
+      required: [id, order_id, dish_id, quantity, price, name]
+      properties:
+        id:
+          $ref: '#/components/schemas/PositiveInteger'
+        order_id:
+          $ref: '#/components/schemas/PositiveInteger'
+        dish_id:
+          $ref: '#/components/schemas/PositiveInteger'
+        quantity:
+          $ref: '#/components/schemas/PositiveInteger'
+        price:
+          $ref: '#/components/schemas/Money'
+        name:
+          type: string
+          description: Текущее название блюда
+      example:
+        id: 1
+        order_id: 1
+        dish_id: 1
+        quantity: 2
+        price: '290.00'
+        name: Классический бургер
