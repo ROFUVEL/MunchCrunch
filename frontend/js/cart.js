@@ -1,5 +1,45 @@
 const API_URL = getApiUrl();
 
+let checkedBranchId = null;
+let availableDishIds = [];
+let isCheckingCart = false;
+let isSubmittingOrder = false;
+
+async function refreshCart() {
+  const branchId = getSelectedBranch();
+  checkedBranchId = null;
+  isCheckingCart = true;
+  renderCart();
+
+  try {
+    if (!branchId) return false;
+    const res = await fetch(`${API_URL}/menu?branchId=${branchId}`);
+    if (!res.ok) throw new Error('Ошибка загрузки меню');
+    const dishes = await res.json();
+    if (!Array.isArray(dishes)) throw new Error('Некорректное меню');
+    if (branchId !== getSelectedBranch()) return false;
+
+    const cart = getCart();
+    for (const item of cart) {
+      const dish = dishes.find(dish => dish.id === item.dishId);
+      if (dish) {
+        item.price = dish.price;
+        item.name = dish.name;
+      }
+    }
+    saveCart(cart);
+    availableDishIds = dishes.map(dish => dish.id);
+    checkedBranchId = branchId;
+    return true;
+  } catch (e) {
+    showNotice('Не удалось проверить цены и доступность блюд. Повторите проверку.', 'error');
+    return false;
+  } finally {
+    isCheckingCart = false;
+    renderCart();
+  }
+}
+
 function getUserId() {
   return localStorage.getItem('userId');
 }
@@ -84,6 +124,8 @@ function renderCart() {
 
   cartDiv.innerHTML = '';
   let total = 0;
+  const isChecked = checkedBranchId !== null && checkedBranchId === getSelectedBranch();
+  let hasUnavailableItems = false;
 
   if (cart.length === 0) {
     cartDiv.innerHTML = '<p>Корзина пуста</p>';
@@ -92,15 +134,19 @@ function renderCart() {
   }
 
   cart.forEach((item, index) => {
-    total += item.price * item.quantity;
+    const isAvailable = isChecked && availableDishIds.includes(item.dishId);
+    if (isAvailable) total += item.price * item.quantity;
+    if (isChecked && !isAvailable) hasUnavailableItems = true;
 
     const el = document.createElement('div');
     el.className = 'card';
     el.innerHTML = `
-      <h3>${item.name}</h3>
-      <p>${item.price} ₽</p>
+      <h3></h3>
+      <p>${!isChecked ? 'Цена и доступность не проверены' :
+        isAvailable ? `${item.price} ₽` : 'Недоступно в этом ресторане'}</p>
       <p>Количество: ${item.quantity}</p>
     `;
+    el.querySelector('h3').textContent = item.name;
 
     const plus = document.createElement('button');
     plus.innerText = '+';
@@ -121,8 +167,11 @@ function renderCart() {
   });
 
   totalDiv.innerHTML = `
-    <h3>Итого: ${total} ₽</h3>
-    <button onclick="checkout()">Оформить заказ</button>
+    ${isChecked ? `<h3>Итого за доступные блюда: ${total.toLocaleString('ru-RU')} ₽</h3>` :
+      '<p>Для расчёта суммы нужно проверить меню выбранного ресторана.</p>'}
+    ${hasUnavailableItems ? '<p role="alert">Удалите недоступные блюда или выберите другой ресторан для оформления заказа.</p>' : ''}
+    ${!isChecked ? `<button onclick="refreshCart()" ${isCheckingCart ? 'disabled' : ''}>${isCheckingCart ? 'Проверка...' : 'Повторить проверку'}</button>` : ''}
+    <button onclick="checkout()" ${!isChecked || hasUnavailableItems || isSubmittingOrder ? 'disabled' : ''}>Оформить заказ</button>
   `;
 }
 
@@ -146,7 +195,8 @@ function removeItem(index) {
 }
 
 async function checkout() {
-  const cart = getCart();
+  if (isSubmittingOrder || isCheckingCart) return;
+  let cart = getCart();
   const userId = getUserId();
   const branchId = getSelectedBranch();
 
@@ -168,6 +218,19 @@ async function checkout() {
     return;
   }
 
+  const previousPrices = cart.map(item => item.price);
+  if (!await refreshCart()) return;
+  cart = getCart();
+  if (cart.some(item => !availableDishIds.includes(item.dishId))) {
+    showNotice('В корзине есть недоступные блюда', 'error');
+    return;
+  }
+  if (cart.some((item, index) => Number(item.price) !== Number(previousPrices[index]))) {
+    showNotice('Цены изменились. Проверьте новую сумму и оформите заказ ещё раз.', 'info');
+    return;
+  }
+  if (branchId !== getSelectedBranch() || cart.length === 0) return;
+
   const orderData = {
     userId: Number(userId),
     branchId: Number(branchId),
@@ -179,6 +242,8 @@ async function checkout() {
   };
 
   try {
+    isSubmittingOrder = true;
+    renderCart();
     const res = await fetch(`${API_URL}/orders`, {
       method: 'POST',
       headers: {
@@ -206,6 +271,9 @@ async function checkout() {
   } catch (e) {
     console.error('Ошибка оформления:', e);
     showNotice('Ошибка сети при оформлении заказа', 'error');
+  } finally {
+    isSubmittingOrder = false;
+    renderCart();
   }
 }
 
@@ -216,7 +284,7 @@ async function initCartPage() {
   }
   
   await loadSelectedBranch();
-  renderCart();
+  await refreshCart();
 }
 
 initCartPage();
