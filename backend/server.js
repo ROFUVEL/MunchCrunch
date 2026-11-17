@@ -183,6 +183,16 @@ app.get('/api/test', (req, res) => {
   res.json({ message: 'Сервер работает', time: new Date().toISOString() });
 });
 
+app.post('/api/users/:userId/orders/:orderId/cancel', async (req, res) => {
+  try {
+    const userId = parseId(req.params.userId);
+    const orderId = parseId(req.params.orderId);
+    res.json(await OrderFacade.cancelOrder(orderId, userId));
+  } catch (e) {
+    sendApiError(e, res);
+  }
+});
+
 const PORT = 3000;
 app.use((error, req, res, next) => {
   sendApiError(error, res);

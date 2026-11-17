@@ -7,6 +7,25 @@ function getUserId() {
 let autoRefreshInterval = null;
 const orderItemsCache = new Map();
 const expandedOrders = new Set();
+const cancellingOrders = new Set();
+
+async function cancelOrder(orderId) {
+  if (cancellingOrders.has(orderId)) return;
+  cancellingOrders.add(orderId);
+  try {
+    const res = await fetch(`${API_URL}/users/${getUserId()}/orders/${orderId}/cancel`, {
+      method: 'POST'
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Не удалось отменить заказ');
+    showNotice('Заказ отменён', 'success');
+  } catch (e) {
+    showNotice(e.message || 'Не удалось отменить заказ', 'error');
+  } finally {
+    cancellingOrders.delete(orderId);
+    await loadUserOrders();
+  }
+}
 
 function renderOrderItems(container, items) {
   container.textContent = '';
@@ -99,6 +118,17 @@ function renderOrders(orders) {
         `<p class="muted">Последнее обновление: ${formatTime(order.updated_at)}</p>` : ''}
     `;
     addOrderItemsSection(el, order.id);
+    if (order.status === 'created') {
+      const cancelButton = document.createElement('button');
+      cancelButton.className = 'secondary';
+      cancelButton.textContent = 'Отменить заказ';
+      cancelButton.disabled = cancellingOrders.has(order.id);
+      cancelButton.addEventListener('click', () => {
+        cancelButton.disabled = true;
+        cancelOrder(order.id);
+      });
+      el.appendChild(cancelButton);
+    }
     container.appendChild(el);
   });
 }

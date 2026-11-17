@@ -19,6 +19,42 @@ afterAll(async () => {
 
 beforeEach(() => jest.resetAllMocks());
 
+test('Созданный заказ можно отменить', async () => {
+  DatabaseAdapter.getOrderById.mockResolvedValue({ id: 10, user_id: 1, status: 'created' });
+  DatabaseAdapter.cancelCreatedOrder.mockResolvedValue({ id: 10, user_id: 1, status: 'cancelled' });
+  const response = await fetch(baseUrl + '/users/1/orders/10/cancel', { method: 'POST' });
+  expect(response.status).toBe(200);
+  expect((await response.json()).status).toBe('cancelled');
+  expect(DatabaseAdapter.cancelCreatedOrder).toHaveBeenCalledWith(10, 1);
+});
+
+test.each(['cooking', 'ready', 'issued', 'cancelled'])(
+  'Заказ в статусе %s нельзя отменить', async status => {
+    DatabaseAdapter.getOrderById.mockResolvedValue({ id: 10, user_id: 1, status });
+    const response = await fetch(baseUrl + '/users/1/orders/10/cancel', { method: 'POST' });
+    expect(response.status).toBe(409);
+    expect(DatabaseAdapter.cancelCreatedOrder).not.toHaveBeenCalled();
+  }
+);
+
+test.each([
+  ['0', null, 400], ['10', null, 404],
+  ['10', { id: 10, user_id: 2, status: 'created' }, 403]
+])('Отмена заказа %s проверяет данные и владельца', async (id, order, status) => {
+  DatabaseAdapter.getOrderById.mockResolvedValue(order);
+  const response = await fetch(baseUrl + `/users/1/orders/${id}/cancel`, { method: 'POST' });
+  expect(response.status).toBe(status);
+  expect(await response.json()).toEqual({ error: expect.any(String) });
+  expect(DatabaseAdapter.cancelCreatedOrder).not.toHaveBeenCalled();
+});
+
+test('Отмена не перезаписывает статус, изменившийся после проверки', async () => {
+  DatabaseAdapter.getOrderById.mockResolvedValue({ id: 10, user_id: 1, status: 'created' });
+  DatabaseAdapter.cancelCreatedOrder.mockResolvedValue(undefined);
+  const response = await fetch(baseUrl + '/users/1/orders/10/cancel', { method: 'POST' });
+  expect(response.status).toBe(409);
+});
+
 test('Состав заказа содержит сохранённые цены и количество', async () => {
   DatabaseAdapter.getOrderById.mockResolvedValue({ id: 10, user_id: 1 });
   const items = [{ id: 1, order_id: 10, dish_id: 2, name: 'Бургер', quantity: 2, price: '310.00' }];

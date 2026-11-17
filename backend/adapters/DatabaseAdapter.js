@@ -165,6 +165,16 @@ class DatabaseAdapter {
     return res.rows[0];
   }
 
+  async cancelCreatedOrder(orderId, userId) {
+    const res = await pool.query(
+      `UPDATE orders SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1 AND user_id = $2 AND status = 'created'
+       RETURNING *`,
+      [orderId, userId]
+    );
+    return res.rows[0];
+  }
+
   async saveAuthCode(phone, code) {
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 5);

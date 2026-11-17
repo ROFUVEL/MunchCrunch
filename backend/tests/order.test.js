@@ -78,7 +78,7 @@ describe('OrderFacade', () => {
       id: 1, user_id: 2, status: 'created'
     });
     await expect(OrderFacade.cancelOrder(1, 1)).rejects.toThrow('Нет доступа');
-    expect(DatabaseAdapter.updateOrderStatus).not.toHaveBeenCalled();
+    expect(DatabaseAdapter.cancelCreatedOrder).not.toHaveBeenCalled();
   });
 
 });

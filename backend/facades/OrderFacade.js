@@ -70,21 +70,27 @@ class OrderFacade {
   }
   
   async cancelOrder(orderId, userId) {
-    
+    if (!isPositiveInteger(orderId) || !isPositiveInteger(userId)) {
+      throw badRequest('Некорректный ID пользователя или заказа');
+    }
     const order = await DatabaseAdapter.getOrderById(orderId);
     if (!order) {
-      throw new Error('Заказ не найден');
+      throw httpError(404, 'Заказ не найден');
     }
     
     if (order.user_id !== userId) {
-      throw new Error('Нет доступа к этому заказу');
+      throw httpError(403, 'Нет доступа к этому заказу');
     }
     
     if (order.status !== 'created') {
-      throw new Error('Нельзя отменить заказ в статусе: ' + order.status);
+      throw httpError(409, 'Нельзя отменить заказ в статусе: ' + order.status);
     }
 
-    return await DatabaseAdapter.updateOrderStatus(orderId, 'cancelled');
+    const cancelledOrder = await DatabaseAdapter.cancelCreatedOrder(orderId, userId);
+    if (!cancelledOrder) {
+      throw httpError(409, 'Статус заказа изменился. Обновите список заказов.');
+    }
+    return cancelledOrder;
   }
 
   async getUserOrderItems(orderId, userId) {
