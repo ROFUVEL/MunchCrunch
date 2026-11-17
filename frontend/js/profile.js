@@ -54,6 +54,7 @@ function renderProfile(user) {
 
 function logout() {
   localStorage.clear();
+  sessionStorage.clear();
   showNotice('Вы вышли из системы', 'success');
   window.location.href = 'login.html';
 }

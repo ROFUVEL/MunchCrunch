@@ -1,10 +1,5 @@
 const API_URL = getApiUrl();
 
-function clearLoginData() {
-  localStorage.clear();
-  sessionStorage.clear();
-}
-
 function validatePhone(phone) {
   if (!phone) {
     showNotice('Введите номер телефона', 'error');
@@ -70,19 +65,9 @@ function onPhoneKeyPress(event) {
 }
 
 function initLoginPage() {
-  clearLoginData();
-  
   const loginBtn = document.getElementById('login-btn');
   if (loginBtn) {
     loginBtn.addEventListener('click', login);
-  }
-  
-  const clearBtn = document.getElementById('clear-btn');
-  if (clearBtn) {
-    clearBtn.addEventListener('click', () => {
-      const phoneEl = document.getElementById('phone');
-      if (phoneEl) phoneEl.value = '';
-    });
   }
   
   const phoneInput = document.getElementById('phone');
