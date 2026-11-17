@@ -81,3 +81,44 @@ test('Изменение цены перед оформлением требуе
   expect(page.getCart()[0].price).toBe(310);
   expect(page.showNotice).toHaveBeenCalledWith(expect.stringContaining('Цены изменились'), 'info');
 });
+
+test('Повторное нажатие во время запроса не создаёт второй заказ', async () => {
+  const page = createPage();
+  page.saveCart([{ dishId: 1, name: 'Бургер', price: 290, quantity: 2 }]);
+  let finishOrder;
+  let orderStarted;
+  const started = new Promise(resolve => { orderStarted = resolve; });
+  page.fetch.mockImplementation(url => {
+    if (url.startsWith('/api/menu')) {
+      return Promise.resolve({ ok: true, json: async () => [{ id: 1, name: 'Бургер', price: 290 }] });
+    }
+    orderStarted();
+    return new Promise(resolve => { finishOrder = resolve; });
+  });
+
+  const firstClick = page.checkout();
+  await page.checkout(); // Меню ещё проверяется.
+  await started;
+  await page.checkout(); // Заказ ещё отправляется.
+  page.changeQty(0, 1);
+  page.removeItem(0);
+  expect(page.getCart()[0].quantity).toBe(2);
+  expect(page.fetch.mock.calls.filter(([url]) => url === '/api/orders')).toHaveLength(1);
+  finishOrder({ ok: true, json: async () => ({ id: 1 }) });
+  await firstClick;
+  expect(page.getCart()).toEqual([]);
+  expect(vm.runInContext('isSubmittingOrder', page)).toBe(false);
+});
+
+test('После отказа сервера можно повторить оформление', async () => {
+  const page = createPage();
+  page.saveCart([{ dishId: 1, name: 'Бургер', price: 290, quantity: 2 }]);
+  page.fetch.mockImplementation(async url => url.startsWith('/api/menu')
+    ? { ok: true, json: async () => [{ id: 1, name: 'Бургер', price: 290 }] }
+    : { ok: false, json: async () => ({ error: 'Попробуйте позже' }) });
+  await page.checkout();
+  expect(vm.runInContext('isSubmittingOrder', page)).toBe(false);
+  expect(page.getCart()).toHaveLength(1);
+  await page.checkout();
+  expect(page.fetch.mock.calls.filter(([url]) => url === '/api/orders')).toHaveLength(2);
+});

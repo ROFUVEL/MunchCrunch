@@ -150,14 +150,17 @@ function renderCart() {
 
     const plus = document.createElement('button');
     plus.innerText = '+';
+    plus.disabled = isSubmittingOrder;
     plus.onclick = () => changeQty(index, 1);
 
     const minus = document.createElement('button');
     minus.innerText = '-';
+    minus.disabled = isSubmittingOrder;
     minus.onclick = () => changeQty(index, -1);
 
     const del = document.createElement('button');
     del.innerText = 'Удалить';
+    del.disabled = isSubmittingOrder;
     del.onclick = () => removeItem(index);
 
     el.appendChild(plus);
@@ -171,11 +174,12 @@ function renderCart() {
       '<p>Для расчёта суммы нужно проверить меню выбранного ресторана.</p>'}
     ${hasUnavailableItems ? '<p role="alert">Удалите недоступные блюда или выберите другой ресторан для оформления заказа.</p>' : ''}
     ${!isChecked ? `<button onclick="refreshCart()" ${isCheckingCart ? 'disabled' : ''}>${isCheckingCart ? 'Проверка...' : 'Повторить проверку'}</button>` : ''}
-    <button onclick="checkout()" ${!isChecked || hasUnavailableItems || isSubmittingOrder ? 'disabled' : ''}>Оформить заказ</button>
+    <button onclick="checkout()" ${!isChecked || hasUnavailableItems || isSubmittingOrder ? 'disabled' : ''}>${isSubmittingOrder ? 'Оформление...' : 'Оформить заказ'}</button>
   `;
 }
 
 function changeQty(index, delta) {
+  if (isSubmittingOrder) return;
   let cart = getCart();
   cart[index].quantity += delta;
   
@@ -188,6 +192,7 @@ function changeQty(index, delta) {
 }
 
 function removeItem(index) {
+  if (isSubmittingOrder) return;
   let cart = getCart();
   cart.splice(index, 1);
   saveCart(cart);
@@ -218,32 +223,32 @@ async function checkout() {
     return;
   }
 
-  const previousPrices = cart.map(item => item.price);
-  if (!await refreshCart()) return;
-  cart = getCart();
-  if (cart.some(item => !availableDishIds.includes(item.dishId))) {
-    showNotice('В корзине есть недоступные блюда', 'error');
-    return;
-  }
-  if (cart.some((item, index) => Number(item.price) !== Number(previousPrices[index]))) {
-    showNotice('Цены изменились. Проверьте новую сумму и оформите заказ ещё раз.', 'info');
-    return;
-  }
-  if (branchId !== getSelectedBranch() || cart.length === 0) return;
-
-  const orderData = {
-    userId: Number(userId),
-    branchId: Number(branchId),
-    items: cart.map(item => ({
-      dishId: item.dishId,
-      quantity: item.quantity,
-      price: item.price
-    }))
-  };
-
+  isSubmittingOrder = true;
+  renderCart();
   try {
-    isSubmittingOrder = true;
-    renderCart();
+    const previousPrices = cart.map(item => item.price);
+    if (!await refreshCart()) return;
+    cart = getCart();
+    if (cart.some(item => !availableDishIds.includes(item.dishId))) {
+      showNotice('В корзине есть недоступные блюда', 'error');
+      return;
+    }
+    if (cart.some((item, index) => Number(item.price) !== Number(previousPrices[index]))) {
+      showNotice('Цены изменились. Проверьте новую сумму и оформите заказ ещё раз.', 'info');
+      return;
+    }
+    if (branchId !== getSelectedBranch() || cart.length === 0) return;
+
+    const orderData = {
+      userId: Number(userId),
+      branchId: Number(branchId),
+      items: cart.map(item => ({
+        dishId: item.dishId,
+        quantity: item.quantity,
+        price: item.price
+      }))
+    };
+
     const res = await fetch(`${API_URL}/orders`, {
       method: 'POST',
       headers: {
