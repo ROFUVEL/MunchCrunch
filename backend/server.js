@@ -162,16 +162,6 @@ app.get('/api/test', (req, res) => {
   res.json({ message: 'Сервер работает', time: new Date().toISOString() });
 });
 
-app.get('/api/test-user', async (req, res) => {
-  try {
-    const user = await DatabaseAdapter.getUserByPhone("78908908989");
-    res.json(user);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: e.message });
-  }
-});
-
 const PORT = 3000;
 if (require.main === module) {
   app.listen(PORT, () => {

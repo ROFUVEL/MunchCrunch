@@ -88,24 +88,6 @@ class DatabaseAdapter {
     return res.rows[0] ? res.rows[0].is_available : null;
   }
 
-  async createOrder(userId, branchId, totalPrice) {
-    const res = await pool.query(
-      `INSERT INTO orders (user_id, branch_id, total_price, status)
-       VALUES ($1, $2, $3, 'created')
-       RETURNING *`,
-      [userId, branchId, totalPrice]
-    );
-    return res.rows[0];
-  }
-
-  async addOrderItem(orderId, dishId, quantity, price) {
-    await pool.query(
-      `INSERT INTO order_items (order_id, dish_id, quantity, price)
-       VALUES ($1, $2, $3, $4)`,
-      [orderId, dishId, quantity, price]
-    );
-  }
-
   async createFullOrder(userId, branchId, items) {
     const client = await pool.connect();
     try {

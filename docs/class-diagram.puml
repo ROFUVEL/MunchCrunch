@@ -13,8 +13,7 @@ class DatabaseAdapter {
 
   +getBranches()
 
-  +createOrder(userId, branchId, totalPrice)
-  +addOrderItem(orderId, dishId, quantity)
+  +createFullOrder(userId, branchId, items)
   +getUserOrders(userId)
 }
 

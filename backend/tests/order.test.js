@@ -21,8 +21,6 @@ describe('OrderFacade', () => {
       total_price: 1000
     });
 
-    DatabaseAdapter.addOrderItem.mockResolvedValue();
-
     const order =
       await OrderFacade.createOrder(
         1,
