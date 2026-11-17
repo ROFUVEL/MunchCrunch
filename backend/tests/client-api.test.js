@@ -19,6 +19,31 @@ afterAll(async () => {
 
 beforeEach(() => jest.resetAllMocks());
 
+test.each([null, 79999999999, {}, [], 'abcdefghij', '123456789', '123456789012', '+79999999999', '7999999999\n'])(
+  'Некорректный телефон %j отклоняется при входе и подтверждении', async (phone) => {
+    for (const route of ['/login', '/verify']) {
+      const response = await fetch(baseUrl + route, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, code: '1234' })
+      });
+      expect(response.status).toBe(400);
+    }
+    expect(DatabaseAdapter.getUserByPhone).not.toHaveBeenCalled();
+    expect(DatabaseAdapter.verifyAuthCode).not.toHaveBeenCalled();
+  }
+);
+
+test.each(['9999999999', '79999999999'])('Телефон %s принимается при подтверждении', async (phone) => {
+  DatabaseAdapter.verifyAuthCode.mockResolvedValue(true);
+  DatabaseAdapter.getUserByPhone.mockResolvedValue({ id: 1 });
+  const response = await fetch(baseUrl + '/verify', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone, code: '1234' })
+  });
+  expect(response.status).toBe(200);
+});
+
 test('Verification returns user ID without a token', async () => {
   DatabaseAdapter.verifyAuthCode.mockResolvedValue(true);
   DatabaseAdapter.getUserByPhone.mockResolvedValue({ id: 1, phone: '79999999999' });

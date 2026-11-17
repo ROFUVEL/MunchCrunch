@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const { isValidPhone } = require('./validation');
 
 const DatabaseAdapter = require('./adapters/DatabaseAdapter');
 const OrderFacade = require('./facades/OrderFacade');
@@ -12,9 +13,9 @@ app.use(express.json());
 
 app.post('/api/login', async (req, res) => {
   try {
-    const { phone } = req.body;
+    const { phone } = req.body || {};
     
-    if (!phone || phone.length < 10) {
+    if (!isValidPhone(phone)) {
       return res.status(400).json({ error: 'Введите корректный номер телефона' });
     }
     
@@ -47,7 +48,11 @@ app.post('/api/login', async (req, res) => {
 // Шаг 2: Подтверждение кода
 app.post('/api/verify', async (req, res) => {
   try {
-    const { phone, code } = req.body;
+    const { phone, code } = req.body || {};
+
+    if (!isValidPhone(phone)) {
+      return res.status(400).json({ error: 'Введите корректный номер телефона' });
+    }
     
     if (!phone || !code) {
       return res.status(400).json({ error: 'Телефон и код обязательны' });
