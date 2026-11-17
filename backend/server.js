@@ -54,8 +54,8 @@ app.post('/api/verify', async (req, res) => {
       return res.status(400).json({ error: 'Введите корректный номер телефона' });
     }
     
-    if (!phone || !code) {
-      return res.status(400).json({ error: 'Телефон и код обязательны' });
+    if (typeof code !== 'string' || !/^\d{4}$/.test(code)) {
+      return res.status(400).json({ error: 'Код должен содержать 4 цифры' });
     }
     
     // Проверяем код

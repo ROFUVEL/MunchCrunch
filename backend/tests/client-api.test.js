@@ -23,6 +23,28 @@ beforeEach(() => {
   DatabaseAdapter.getBranchById.mockResolvedValue({ id: 1 });
 });
 
+test.each([undefined, null, 1234, true, {}, [], '', '123', '12345', 'abcd', '12 4', '1234\n'])(
+  'Некорректный формат кода %j возвращает 400', async code => {
+    const response = await fetch(baseUrl + '/verify', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: '79999999999', code })
+    });
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'Код должен содержать 4 цифры' });
+    expect(DatabaseAdapter.verifyAuthCode).not.toHaveBeenCalled();
+  }
+);
+
+test('Код правильного формата, который не найден или истёк, возвращает 401', async () => {
+  DatabaseAdapter.verifyAuthCode.mockResolvedValue(false);
+  const response = await fetch(baseUrl + '/verify', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone: '79999999999', code: '0000' })
+  });
+  expect(response.status).toBe(401);
+  expect(DatabaseAdapter.verifyAuthCode).toHaveBeenCalledWith('79999999999', '0000');
+});
+
 test('Отсутствующий ресторан возвращает 404, существующий с пустым меню — 200', async () => {
   DatabaseAdapter.getBranchById.mockResolvedValueOnce(null);
   const missing = await fetch(baseUrl + '/menu?branchId=999');
