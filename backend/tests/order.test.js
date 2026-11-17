@@ -51,6 +51,28 @@ describe('OrderFacade', () => {
     );
   });
 
+  test('Повторяющиеся блюда объединяются, разные остаются отдельными позициями', async () => {
+    DatabaseAdapter.getMenuByBranch.mockResolvedValue([
+      { id: 1, price: '310.00' }, { id: 2, price: '150.00' }
+    ]);
+    await OrderFacade.createOrder(1, 1, [
+      { dishId: 1, quantity: 2, price: 1 },
+      { dishId: 2, quantity: 1 },
+      { dishId: 1, quantity: 3, price: 999 }
+    ]);
+    expect(DatabaseAdapter.createFullOrder).toHaveBeenCalledWith(1, 1, [
+      { dishId: 1, quantity: 5, price: 310 },
+      { dishId: 2, quantity: 1, price: 150 }
+    ]);
+  });
+
+  test('Суммарное количество не может превысить диапазон INTEGER', async () => {
+    await expect(OrderFacade.createOrder(1, 1, [
+      { dishId: 1, quantity: 2147483647 }, { dishId: 1, quantity: 1 }
+    ])).rejects.toMatchObject({ status: 400 });
+    expect(DatabaseAdapter.createFullOrder).not.toHaveBeenCalled();
+  });
+
   test('Недоступное блюдо нельзя заказать', async () => {
     DatabaseAdapter.getMenuByBranch.mockResolvedValue([]);
 

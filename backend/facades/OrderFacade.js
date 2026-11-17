@@ -16,6 +16,18 @@ class OrderFacade {
     if (!isValidOrderItems(items)) {
       throw badRequest('Некорректные позиции заказа');
     }
+    const mergedItems = [];
+    for (const item of items) {
+      const existing = mergedItems.find(position => position.dishId === item.dishId);
+      if (existing) {
+        existing.quantity += item.quantity;
+        if (!isPositiveInteger(existing.quantity)) {
+          throw badRequest('Слишком большое количество блюда');
+        }
+      } else {
+        mergedItems.push({ dishId: item.dishId, quantity: item.quantity });
+      }
+    }
     if (!await DatabaseAdapter.getUserById(userId)) {
       throw httpError(404, 'Пользователь не найден');
     }
@@ -29,7 +41,7 @@ class OrderFacade {
 
     const orderItems = [];
 
-    for (const item of items) {
+    for (const item of mergedItems) {
       const { dishId, quantity } = item;
 
       const dish = dishById.get(dishId);
