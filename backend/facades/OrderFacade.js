@@ -1,6 +1,6 @@
 const DatabaseAdapter = require('../adapters/DatabaseAdapter');
 const { isPositiveInteger, isValidOrderItems } = require('../validation');
-const { badRequest } = require('../errors');
+const { badRequest, httpError } = require('../errors');
 
 class OrderFacade {
   
@@ -85,6 +85,16 @@ class OrderFacade {
     }
 
     return await DatabaseAdapter.updateOrderStatus(orderId, 'cancelled');
+  }
+
+  async getUserOrderItems(orderId, userId) {
+    if (!isPositiveInteger(orderId) || !isPositiveInteger(userId)) {
+      throw badRequest('Некорректный ID пользователя или заказа');
+    }
+    const order = await DatabaseAdapter.getOrderById(orderId);
+    if (!order) throw httpError(404, 'Заказ не найден');
+    if (order.user_id !== userId) throw httpError(403, 'Нет доступа к этому заказу');
+    return DatabaseAdapter.getOrderItems(orderId);
   }
   
   async getUserOrderStats(userId) {

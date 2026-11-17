@@ -19,6 +19,29 @@ afterAll(async () => {
 
 beforeEach(() => jest.resetAllMocks());
 
+test('Состав заказа содержит сохранённые цены и количество', async () => {
+  DatabaseAdapter.getOrderById.mockResolvedValue({ id: 10, user_id: 1 });
+  const items = [{ id: 1, order_id: 10, dish_id: 2, name: 'Бургер', quantity: 2, price: '310.00' }];
+  DatabaseAdapter.getOrderItems.mockResolvedValue(items);
+  const response = await fetch(baseUrl + '/users/1/orders/10/items');
+  expect(response.status).toBe(200);
+  expect(await response.json()).toEqual(items);
+  expect(DatabaseAdapter.getOrderItems).toHaveBeenCalledWith(10);
+});
+
+test.each([
+  ['/users/0/orders/10/items', null, 400],
+  ['/users/1/orders/abc/items', null, 400],
+  ['/users/1/orders/10/items', null, 404],
+  ['/users/1/orders/10/items', { id: 10, user_id: 2 }, 403]
+])('Состав заказа: %s возвращает ошибку %s %s', async (url, order, status) => {
+  DatabaseAdapter.getOrderById.mockResolvedValue(order);
+  const response = await fetch(baseUrl + url);
+  expect(response.status).toBe(status);
+  expect(await response.json()).toEqual({ error: expect.any(String) });
+  expect(DatabaseAdapter.getOrderItems).not.toHaveBeenCalled();
+});
+
 test('Недоступное блюдо возвращает 400 с понятным сообщением', async () => {
   DatabaseAdapter.getMenuByBranch.mockResolvedValue([]);
   const response = await fetch(baseUrl + '/orders', {

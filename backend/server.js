@@ -169,6 +169,16 @@ app.get('/api/orders/:userId', async (req, res) => {
 });
 
 
+app.get('/api/users/:userId/orders/:orderId/items', async (req, res) => {
+  try {
+    const userId = parseId(req.params.userId);
+    const orderId = parseId(req.params.orderId);
+    res.json(await OrderFacade.getUserOrderItems(orderId, userId));
+  } catch (e) {
+    sendApiError(e, res);
+  }
+});
+
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Сервер работает', time: new Date().toISOString() });
 });
