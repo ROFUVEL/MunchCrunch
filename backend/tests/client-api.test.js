@@ -19,6 +19,35 @@ afterAll(async () => {
 
 beforeEach(() => jest.resetAllMocks());
 
+test.each(['0', '-1', '1.5', '1abc', '2147483648', 'true'])(
+  'Некорректный ID %s отклоняется до обращения к БД', async (id) => {
+    for (const route of [`/users/${id}`, `/orders/${id}`, `/menu?branchId=${id}`]) {
+      const response = await fetch(baseUrl + route);
+      expect(response.status).toBe(400);
+    }
+    expect(DatabaseAdapter.getUserById).not.toHaveBeenCalled();
+    expect(DatabaseAdapter.getUserOrders).not.toHaveBeenCalled();
+    expect(DatabaseAdapter.getMenuByBranch).not.toHaveBeenCalled();
+  }
+);
+
+test.each([
+  { userId: '1' }, { branchId: true }, { branchId: 1.5 },
+  { items: {} }, { items: [null] },
+  { items: [{ dishId: '1', quantity: 1 }] },
+  { items: [{ dishId: 1, quantity: 1.5 }] },
+  { items: [{ dishId: 1, quantity: '2' }] },
+  { items: [{ dishId: 1, quantity: 0 }] }
+])('Некорректный заказ %j отклоняется', async (changes) => {
+  const response = await fetch(baseUrl + '/orders', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: 1, branchId: 1, items: [{ dishId: 1, quantity: 1 }], ...changes })
+  });
+  expect(response.status).toBe(400);
+  expect(DatabaseAdapter.getMenuByBranch).not.toHaveBeenCalled();
+  expect(DatabaseAdapter.createFullOrder).not.toHaveBeenCalled();
+});
+
 test.each([null, 79999999999, {}, [], 'abcdefghij', '123456789', '123456789012', '+79999999999', '7999999999\n'])(
   'Некорректный телефон %j отклоняется при входе и подтверждении', async (phone) => {
     for (const route of ['/login', '/verify']) {

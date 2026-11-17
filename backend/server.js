@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { isValidPhone } = require('./validation');
+const { isValidPhone, isPositiveInteger, parseId, isValidOrderItems } = require('./validation');
 
 const DatabaseAdapter = require('./adapters/DatabaseAdapter');
 const OrderFacade = require('./facades/OrderFacade');
@@ -84,7 +84,11 @@ app.post('/api/verify', async (req, res) => {
 
 app.get('/api/users/:userId', async (req, res) => {
   try {
-    const user = await DatabaseAdapter.getUserById(req.params.userId);
+    const userId = parseId(req.params.userId);
+    if (!isPositiveInteger(userId)) {
+      return res.status(400).json({ error: 'Некорректный ID пользователя' });
+    }
+    const user = await DatabaseAdapter.getUserById(userId);
     if (!user) {
       return res.status(404).json({ error: 'Пользователь не найден' });
     }
@@ -116,11 +120,11 @@ app.get('/api/branches', async (req, res) => {
 // Меню для клиента (только доступные блюда в выбранной точке)
 app.get('/api/menu', async (req, res) => {
   try {
-    const branchId = req.query.branchId;
-    if (!branchId) {
-      return res.status(400).json({ error: 'Не указан филиал' });
+    const branchId = parseId(req.query.branchId);
+    if (!isPositiveInteger(branchId)) {
+      return res.status(400).json({ error: 'Некорректный ID ресторана' });
     }
-    const dishes = await DatabaseAdapter.getMenuByBranch(parseInt(branchId));
+    const dishes = await DatabaseAdapter.getMenuByBranch(branchId);
     res.json(dishes);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -131,17 +135,17 @@ app.get('/api/menu', async (req, res) => {
 // Создание заказа (клиент)
 app.post('/api/orders', async (req, res) => {
   try {
-    const { userId, branchId, items } = req.body;
-    if (!Number.isInteger(userId) || userId <= 0) {
-      return res.status(400).json({ error: 'Invalid userId' });
+    const { userId, branchId, items } = req.body || {};
+    if (!isPositiveInteger(userId)) {
+      return res.status(400).json({ error: 'Некорректный ID пользователя' });
     }
     
-    if (!branchId) {
-      return res.status(400).json({ error: 'Не указан филиал' });
+    if (!isPositiveInteger(branchId)) {
+      return res.status(400).json({ error: 'Некорректный ID ресторана' });
     }
     
-    if (!items || items.length === 0) {
-      return res.status(400).json({ error: 'Корзина пуста' });
+    if (!isValidOrderItems(items)) {
+      return res.status(400).json({ error: 'Корзина пуста или содержит некорректные позиции' });
     }
     
     const order = await OrderFacade.createOrder(userId, branchId, items);
@@ -155,7 +159,11 @@ app.post('/api/orders', async (req, res) => {
 // Заказы пользователя (клиент)
 app.get('/api/orders/:userId', async (req, res) => {
   try {
-    const orders = await DatabaseAdapter.getUserOrders(parseInt(req.params.userId));
+    const userId = parseId(req.params.userId);
+    if (!isPositiveInteger(userId)) {
+      return res.status(400).json({ error: 'Некорректный ID пользователя' });
+    }
+    const orders = await DatabaseAdapter.getUserOrders(userId);
     res.json(orders);
   } catch (e) {
     res.status(500).json({ error: e.message });

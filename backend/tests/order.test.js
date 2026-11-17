@@ -7,6 +7,14 @@ describe('OrderFacade', () => {
 
   beforeEach(() => jest.resetAllMocks());
 
+  test.each([0, -1, 1.5, '2', true, null, 2147483648])(
+    'Количество %j отклоняется до загрузки меню', async (quantity) => {
+      await expect(OrderFacade.createOrder(1, 1, [{ dishId: 1, quantity }]))
+        .rejects.toThrow('Некорректные позиции');
+      expect(DatabaseAdapter.getMenuByBranch).not.toHaveBeenCalled();
+    }
+  );
+
   test('Создание заказа', async () => {
 
     DatabaseAdapter.getMenuByBranch.mockResolvedValue([
