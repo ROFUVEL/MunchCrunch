@@ -1,31 +1,5 @@
 const API_URL = getApiUrl();
 
-async function checkSession() {
-  const token = localStorage.getItem('sessionToken');
-  
-  if (!token) {
-    window.location.href = 'login.html';
-    return false;
-  }
-  
-  try {
-    const res = await fetch(`${API_URL}/check-session`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    
-    if (!res.ok) {
-      localStorage.clear();
-      window.location.href = 'login.html';
-      return false;
-    }
-    
-    return true;
-  } catch (e) {
-    window.location.href = 'login.html';
-    return false;
-  }
-}
-
 async function loadBranches() {
   const div = document.getElementById('branches');
   if (!div) return;
@@ -108,23 +82,7 @@ function goToCart() {
   window.location.href = 'cart.html';
 }
 
-async function logout() {
-  const token = localStorage.getItem('sessionToken');
-  
-  if (token) {
-    try {
-      await fetch(`${API_URL}/logout`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
-    } catch (e) {
-      console.error('Ошибка при выходе:', e);
-    }
-  }
-  
+function logout() {
   localStorage.clear();
   sessionStorage.clear();
   showNotice('Вы вышли из системы', 'success');
@@ -132,8 +90,10 @@ async function logout() {
 }
 
 async function initBranchesPage() {
-  const sessionValid = await checkSession();
-  if (!sessionValid) return;
+  if (!localStorage.getItem('userId')) {
+    window.location.href = 'login.html';
+    return;
+  }
   
   await loadBranches();
   

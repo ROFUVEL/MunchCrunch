@@ -3,16 +3,13 @@ const API_URL = getApiUrl();
 async function loadProfile() {
   const userId = localStorage.getItem('userId');
   
-  const token = localStorage.getItem('sessionToken');
-  if (!userId || !token) {
+  if (!userId) {
     window.location.href = 'login.html';
     return;
   }
   
   try {
-    const res = await fetch(`${API_URL}/users/${userId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const res = await fetch(`${API_URL}/users/${userId}`);
     if (!res.ok) throw new Error('Ошибка загрузки');
     
     const user = await res.json();

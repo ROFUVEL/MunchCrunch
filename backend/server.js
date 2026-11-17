@@ -10,31 +10,6 @@ app.use(cors());
 app.use(express.json());
 
 
-function generateSessionToken() {
-  return Math.random().toString(36).substring(2, 15) + 
-         Math.random().toString(36).substring(2, 15) +
-         Date.now().toString(36);
-}
-
-// Middleware для проверки сессии
-async function checkSession(req, res, next) {
-  const token = req.headers['authorization']?.split(' ')[1];
-  
-  if (!token) {
-    return res.status(401).json({ error: 'Не авторизован' });
-  }
-  
-  const session = await DatabaseAdapter.getSession(token);
-  if (!session) {
-    return res.status(401).json({ error: 'Сессия истекла или недействительна' });
-  }
-  
-  req.userId = session.user_id;
-  next();
-}
-
-
-// Шаг 1: Логин (только проверка телефона)
 app.post('/api/login', async (req, res) => {
   try {
     const { phone } = req.body;
@@ -91,16 +66,9 @@ app.post('/api/verify', async (req, res) => {
       return res.status(404).json({ error: 'Пользователь не найден' });
     }
     
-    // Генерируем токен сессии
-    const token = generateSessionToken();
-    
-    // Сохраняем сессию
-    await DatabaseAdapter.createSession(user.id, token);
-    
     res.json({
       success: true,
-      userId: user.id,
-      token: token
+      userId: user.id
     });
     
   } catch (e) {
@@ -109,32 +77,8 @@ app.post('/api/verify', async (req, res) => {
   }
 });
 
-// Проверка сессии (для защищенных страниц)
-app.get('/api/check-session', checkSession, async (req, res) => {
-  res.json({ 
-    valid: true, 
-    userId: req.userId
-  });
-});
-
-// Выход
-app.post('/api/logout', checkSession, async (req, res) => {
+app.get('/api/users/:userId', async (req, res) => {
   try {
-    const token = req.headers['authorization']?.split(' ')[1];
-    await DatabaseAdapter.deleteSession(token);
-    res.json({ message: 'Выход выполнен' });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-
-// Получить пользователя (для профиля)
-app.get('/api/users/:userId', checkSession, async (req, res) => {
-  try {
-    if (req.userId != req.params.userId) {
-      return res.status(403).json({ error: 'Нет доступа к чужому профилю' });
-    }
     const user = await DatabaseAdapter.getUserById(req.params.userId);
     if (!user) {
       return res.status(404).json({ error: 'Пользователь не найден' });
@@ -180,9 +124,12 @@ app.get('/api/menu', async (req, res) => {
 
 
 // Создание заказа (клиент)
-app.post('/api/orders', checkSession, async (req, res) => {
+app.post('/api/orders', async (req, res) => {
   try {
-    const { branchId, items } = req.body;
+    const { userId, branchId, items } = req.body;
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(400).json({ error: 'Invalid userId' });
+    }
     
     if (!branchId) {
       return res.status(400).json({ error: 'Не указан филиал' });
@@ -192,7 +139,7 @@ app.post('/api/orders', checkSession, async (req, res) => {
       return res.status(400).json({ error: 'Корзина пуста' });
     }
     
-    const order = await OrderFacade.createOrder(req.userId, branchId, items);
+    const order = await OrderFacade.createOrder(userId, branchId, items);
     res.json(order);
   } catch (e) {
     console.error('Order creation error:', e);
@@ -201,11 +148,8 @@ app.post('/api/orders', checkSession, async (req, res) => {
 });
 
 // Заказы пользователя (клиент)
-app.get('/api/orders/:userId', checkSession, async (req, res) => {
+app.get('/api/orders/:userId', async (req, res) => {
   try {
-    if (req.userId != req.params.userId) {
-      return res.status(403).json({ error: 'Нет доступа к чужим заказам' });
-    }
     const orders = await DatabaseAdapter.getUserOrders(parseInt(req.params.userId));
     res.json(orders);
   } catch (e) {

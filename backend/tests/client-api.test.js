@@ -19,7 +19,7 @@ afterAll(async () => {
 
 beforeEach(() => jest.resetAllMocks());
 
-test('Подтверждение входа возвращает клиентскую сессию', async () => {
+test('Verification returns user ID without a token', async () => {
   DatabaseAdapter.verifyAuthCode.mockResolvedValue(true);
   DatabaseAdapter.getUserByPhone.mockResolvedValue({ id: 1, phone: '79999999999' });
   const response = await fetch(`${baseUrl}/verify`, {
@@ -29,9 +29,8 @@ test('Подтверждение входа возвращает клиентс�
   });
   expect(response.status).toBe(200);
   expect(await response.json()).toEqual({
-    success: true, userId: 1, token: expect.any(String)
+    success: true, userId: 1
   });
-  expect(DatabaseAdapter.createSession).toHaveBeenCalledWith(1, expect.any(String));
 });
 
 test('Меню выбранного ресторана доступно клиенту', async () => {
@@ -42,16 +41,17 @@ test('Меню выбранного ресторана доступно клие
   expect(DatabaseAdapter.getMenuByBranch).toHaveBeenCalledWith(2);
 });
 
-test('Клиент видит только свои заказы', async () => {
-  DatabaseAdapter.getSession.mockResolvedValue({ user_id: 1 });
+test('Orders are available by user ID without a token', async () => {
   DatabaseAdapter.getUserOrders.mockResolvedValue([{ id: 10, user_id: 1 }]);
-  const options = { headers: { Authorization: 'Bearer token' } };
-  const own = await fetch(`${baseUrl}/orders/1`, options);
-  expect(own.status).toBe(200);
-  expect(await own.json()).toEqual([{ id: 10, user_id: 1 }]);
-  const other = await fetch(`${baseUrl}/orders/2`, options);
-  expect(other.status).toBe(403);
-  expect(DatabaseAdapter.getUserOrders).toHaveBeenCalledTimes(1);
+  const response = await fetch(baseUrl + '/orders/1');
+  expect(response.status).toBe(200);
+  expect(await response.json()).toEqual([{ id: 10, user_id: 1 }]);
+  expect(DatabaseAdapter.getUserOrders).toHaveBeenCalledWith(1);
+});
+
+test.each([['GET', '/check-session'], ['POST', '/logout']])('Removed endpoint: %s %s', async (method, url) => {
+  const response = await fetch(baseUrl + url, { method });
+  expect(response.status).toBe(404);
 });
 
 test.each([
@@ -61,7 +61,31 @@ test.each([
   ['PATCH', '/orders/1/status']
 ])('Управляющий API удалён: %s %s', async (method, url) => {
   const response = await fetch(`${baseUrl}${url}`, {
-    method, headers: { Authorization: 'Bearer token' }
+    method
   });
   expect(response.status).toBe(404);
+});
+
+
+test('Order creation uses the user ID from the request body', async () => {
+  DatabaseAdapter.getDishesByIds.mockResolvedValue([{ id: 1, price: 100 }]);
+  DatabaseAdapter.getDishAvailabilityInBranch.mockResolvedValue(true);
+  DatabaseAdapter.createFullOrder.mockResolvedValue({ id: 10, user_id: 2 });
+  const response = await fetch(baseUrl + '/orders', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: 2, branchId: 1, items: [{ dishId: 1, quantity: 1 }] })
+  });
+  expect(response.status).toBe(200);
+  expect(DatabaseAdapter.createFullOrder).toHaveBeenCalledWith(2, 1, expect.any(Array));
+});
+
+test('Order creation rejects a missing user ID', async () => {
+  const response = await fetch(baseUrl + '/orders', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ branchId: 1, items: [{ dishId: 1, quantity: 1 }] })
+  });
+  expect(response.status).toBe(400);
+  expect(DatabaseAdapter.createFullOrder).not.toHaveBeenCalled();
 });

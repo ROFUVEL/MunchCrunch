@@ -1,55 +1,22 @@
 const API_URL = getApiUrl();
 
-function getAuthToken() {
-  return localStorage.getItem('sessionToken');
-}
-
 function getUserId() {
   return localStorage.getItem('userId');
-}
-
-async function checkSession() {
-  const token = getAuthToken();
-  
-  if (!token) {
-    window.location.href = 'login.html';
-    return false;
-  }
-  
-  try {
-    const res = await fetch(`${API_URL}/check-session`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    
-    if (!res.ok) {
-      localStorage.clear();
-      window.location.href = 'login.html';
-      return false;
-    }
-    
-    return true;
-  } catch (e) {
-    window.location.href = 'login.html';
-    return false;
-  }
 }
 
 let autoRefreshInterval = null;
 
 async function loadUserOrders() {
   const userId = getUserId();
-  const token = getAuthToken();
   
-  if (!userId || !token) {
+  if (!userId) {
     showNotice('Сначала войдите в систему', 'error');
     window.location.href = 'login.html';
     return;
   }
   
   try {
-    const res = await fetch(`${API_URL}/orders/${userId}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    const res = await fetch(`${API_URL}/orders/${userId}`);
     
     if (!res.ok) {
       const error = await res.json().catch(() => ({}));
@@ -146,8 +113,10 @@ function stopAutoRefresh() {
 }
 
 async function initOrdersPage() {
-  const sessionValid = await checkSession();
-  if (!sessionValid) return;
+  if (!localStorage.getItem('userId')) {
+    window.location.href = 'login.html';
+    return;
+  }
   
   await loadUserOrders();
   startAutoRefresh();

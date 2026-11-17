@@ -1,9 +1,5 @@
 const API_URL = getApiUrl();
 
-function getAuthToken() {
-  return localStorage.getItem('sessionToken');
-}
-
 function getUserId() {
   return localStorage.getItem('userId');
 }
@@ -12,13 +8,11 @@ function getSelectedBranch() {
   return localStorage.getItem('branchId');
 }
 
-async function authFetch(url, options = {}) {
-  const token = getAuthToken();
+async function apiFetch(url, options = {}) {
   
   const defaultOptions = {
     headers: {
-      'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` })
+      'Content-Type': 'application/json'
     }
   };
   
@@ -33,12 +27,6 @@ async function authFetch(url, options = {}) {
   
   const res = await fetch(`${API_URL}${url}`, mergedOptions);
   
-  if (res.status === 401) {
-    
-    localStorage.clear();
-    window.location.href = 'login.html';
-    throw new Error('Сессия истекла');
-  }
   
   return res;
 }
@@ -70,14 +58,13 @@ async function getBranches() {
 }
 
 async function createOrder(data) {
-  const token = getAuthToken();
   const userId = getUserId();
   
-  if (!token || !userId) {
+  if (!userId) {
     throw new Error('Не авторизован');
   }
   
-  const res = await authFetch('/orders', {
+  const res = await apiFetch('/orders', {
     method: "POST",
     body: JSON.stringify({
       userId: parseInt(userId),
@@ -95,14 +82,13 @@ async function createOrder(data) {
 }
 
 async function getUserOrders() {
-  const token = getAuthToken();
   const userId = getUserId();
   
-  if (!token || !userId) {
+  if (!userId) {
     throw new Error('Не авторизован');
   }
   
-  const res = await authFetch(`/orders/${userId}`);
+  const res = await apiFetch(`/orders/${userId}`);
   
   if (!res.ok) {
     throw new Error('Ошибка загрузки заказов');
@@ -122,14 +108,13 @@ async function getCategories() {
 }
 
 async function getUserProfile() {
-  const token = getAuthToken();
   const userId = getUserId();
   
-  if (!token || !userId) {
+  if (!userId) {
     throw new Error('Не авторизован');
   }
   
-  const res = await authFetch(`/users/${userId}`);
+  const res = await apiFetch(`/users/${userId}`);
   
   if (!res.ok) {
     throw new Error('Ошибка загрузки профиля');
@@ -139,17 +124,7 @@ async function getUserProfile() {
 }
 
 
-async function logout() {
-  const token = getAuthToken();
-  
-  if (token) {
-    try {
-      await authFetch('/logout', { method: 'POST' });
-    } catch (e) {
-      console.error('Ошибка при выходе:', e);
-    }
-  }
-  
+function logout() {
   localStorage.clear();
   sessionStorage.clear();
   window.location.href = 'login.html';

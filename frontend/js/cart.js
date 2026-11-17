@@ -1,41 +1,11 @@
 const API_URL = getApiUrl();
 
-function getAuthToken() {
-  return localStorage.getItem('sessionToken');
-}
-
 function getUserId() {
   return localStorage.getItem('userId');
 }
 
 function getSelectedBranch() {
   return localStorage.getItem('branchId');
-}
-
-async function checkSession() {
-  const token = getAuthToken();
-  
-  if (!token) {
-    window.location.href = 'login.html';
-    return false;
-  }
-  
-  try {
-    const res = await fetch(`${API_URL}/check-session`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    
-    if (!res.ok) {
-      localStorage.clear();
-      window.location.href = 'login.html';
-      return false;
-    }
-    
-    return true;
-  } catch (e) {
-    window.location.href = 'login.html';
-    return false;
-  }
 }
 
 async function loadSelectedBranch() {
@@ -179,7 +149,6 @@ async function checkout() {
   const cart = getCart();
   const userId = getUserId();
   const branchId = getSelectedBranch();
-  const token = getAuthToken();
 
   
   if (cart.length === 0) {
@@ -187,7 +156,7 @@ async function checkout() {
     return;
   }
   
-  if (!userId || !token) {
+  if (!userId) {
     showNotice('Сначала войдите в систему', 'error');
     window.location.href = 'login.html';
     return;
@@ -200,6 +169,7 @@ async function checkout() {
   }
 
   const orderData = {
+    userId: Number(userId),
     branchId: Number(branchId),
     items: cart.map(item => ({
       dishId: item.dishId,
@@ -212,8 +182,7 @@ async function checkout() {
     const res = await fetch(`${API_URL}/orders`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(orderData)
     });
@@ -241,8 +210,10 @@ async function checkout() {
 }
 
 async function initCartPage() {
-  const sessionValid = await checkSession();
-  if (!sessionValid) return;
+  if (!localStorage.getItem('userId')) {
+    window.location.href = 'login.html';
+    return;
+  }
   
   await loadSelectedBranch();
   renderCart();

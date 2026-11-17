@@ -1,6 +1,6 @@
 const API_URL = getApiUrl();
 
-function clearOldSession() {
+function clearLoginData() {
   localStorage.clear();
   sessionStorage.clear();
 }
@@ -70,7 +70,7 @@ function onPhoneKeyPress(event) {
 }
 
 function initLoginPage() {
-  clearOldSession();
+  clearLoginData();
   
   const loginBtn = document.getElementById('login-btn');
   if (loginBtn) {

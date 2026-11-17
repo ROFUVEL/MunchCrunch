@@ -23,9 +23,6 @@ class DatabaseAdapter {
 
   +saveAuthCode(phone, code)
   +verifyAuthCode(phone, code)
-  +createSession(userId, token)
-  +getSession(token)
-  +deleteSession(token)
 }
 
 ' =========================
@@ -124,13 +121,6 @@ class AuthCode {
   +is_used
 }
 
-class Session {
-  +id
-  +user_id
-  +token
-  +expires_at
-}
-
 ' =========================
 ' RELATIONS (DB)
 ' =========================
@@ -146,7 +136,6 @@ BranchDish "1" --> "1" Branch
 
 Category "1" --> "*" Dish
 
-User "1" --> "*" Session
 User "1" --> "*" AuthCode
 
 

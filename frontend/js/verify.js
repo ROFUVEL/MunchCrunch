@@ -6,7 +6,7 @@ async function loadVerifyPage() {
   currentPhone = sessionStorage.getItem('verifyPhone');
   
   if (!currentPhone) {
-    showNotice('Сессия истекла, войдите заново', 'error');
+    showNotice('Введите телефон, войдите заново', 'error');
     window.location.href = 'login.html';
     return;
   }
@@ -46,7 +46,6 @@ async function verifyCode() {
     
     localStorage.setItem('userId', data.userId);
     localStorage.setItem('userPhone', currentPhone);
-    localStorage.setItem('sessionToken', data.token);
     
     sessionStorage.removeItem('verifyPhone');
     

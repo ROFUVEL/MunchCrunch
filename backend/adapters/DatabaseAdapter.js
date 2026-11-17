@@ -220,49 +220,6 @@ class DatabaseAdapter {
     return true;
   }
 
-  async createSession(userId, token) {
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24);
-    
-    const res = await pool.query(
-      `INSERT INTO sessions (user_id, token, expires_at)
-       VALUES ($1, $2, $3)
-       RETURNING *`,
-      [userId, token, expiresAt]
-    );
-    return res.rows[0];
-  }
-
-  async getSession(token) {
-    const res = await pool.query(
-      `SELECT s.*, u.phone
-       FROM sessions s
-       JOIN users u ON s.user_id = u.id
-       WHERE s.token = $1 AND s.expires_at > NOW()`,
-      [token]
-    );
-    return res.rows[0];
-  }
-
-  async deleteSession(token) {
-    await pool.query(
-      `DELETE FROM sessions WHERE token = $1`,
-      [token]
-    );
-  }
-
-  async deleteAllUserSessions(userId) {
-    await pool.query(
-      `DELETE FROM sessions WHERE user_id = $1`,
-      [userId]
-    );
-  }
-
-  async cleanExpiredSessions() {
-    await pool.query(
-      `DELETE FROM sessions WHERE expires_at < NOW()`
-    );
-  }
 }
 
 module.exports = new DatabaseAdapter();

@@ -1,39 +1,7 @@
 const API_URL = getApiUrl();
 
-function getAuthToken() {
-  return localStorage.getItem('sessionToken');
-}
-
 function getSelectedBranch() {
   return localStorage.getItem('branchId');
-}
-
-// Проверка сессии
-async function checkSession() {
-  const token = getAuthToken();
-  
-  // Клиент без токена -> на логин
-  if (!token) {
-    window.location.href = 'login.html';
-    return false;
-  }
-  
-  try {
-    const res = await fetch(`${API_URL}/check-session`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    
-    if (!res.ok) {
-      localStorage.clear();
-      window.location.href = 'login.html';
-      return false;
-    }
-    
-    return true;
-  } catch (e) {
-    window.location.href = 'login.html';
-    return false;
-  }
 }
 
 let allDishes = [];
@@ -208,8 +176,10 @@ function filterCategory(categoryName) {
 }
 
 async function initMenuPage() {
-  const sessionValid = await checkSession();
-  if (!sessionValid) return;
+  if (!localStorage.getItem('userId')) {
+    window.location.href = 'login.html';
+    return;
+  }
   
   await loadMenu();
 }
