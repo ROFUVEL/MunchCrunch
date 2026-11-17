@@ -5,6 +5,9 @@ const vm = require('vm');
 const source = fs.readFileSync(
   path.join(__dirname, '../../frontend/js/cart.js'), 'utf8'
 );
+const storageSource = fs.readFileSync(
+  path.join(__dirname, '../../frontend/js/cart-storage.js'), 'utf8'
+);
 
 function createPage() {
   const storage = new Map();
@@ -21,6 +24,7 @@ function createPage() {
     console,
     setTimeout: jest.fn()
   });
+  vm.runInContext(storageSource, page);
   vm.runInContext(source, page);
   // Для этих проверок достаточно логики корзины без отрисовки HTML.
   vm.runInContext('renderCart = () => {};', page);
@@ -32,6 +36,29 @@ function createPage() {
   ]);
   return page;
 }
+
+test.each(['{', '{}', 'null', '"text"', '[null]', '[{"dishId":1}]',
+  '[{"dishId":1,"name":"Бургер","quantity":1.5,"price":290}]',
+  '[{"dishId":1,"name":"Бургер","quantity":1,"price":"invalid"}]'
+])('Повреждённая корзина %s не останавливает страницу', savedCart => {
+  const page = createPage();
+  page.localStorage.setItem('cart', savedCart);
+  expect(page.getCart()).toEqual([]);
+  expect(page.localStorage.getItem('cart')).toBeNull();
+  expect(page.localStorage.getItem('userId')).toBe('1');
+  expect(page.localStorage.getItem('branchId')).toBe('2');
+  expect(page.showNotice).toHaveBeenCalledTimes(1);
+  expect(page.getCart()).toEqual([]);
+  expect(page.showNotice).toHaveBeenCalledTimes(1);
+});
+
+test.each([0, '0.00', 290, '310.00'])('Корректная цена %j сохраняется при чтении корзины', price => {
+  const page = createPage();
+  const cart = [{ dishId: 1, name: 'Бургер', price, quantity: 2 }];
+  page.saveCart(cart);
+  expect(page.getCart()).toEqual(cart);
+  expect(page.showNotice).not.toHaveBeenCalled();
+});
 
 test('Смена ресторана обновляет цену и сохраняет недоступные блюда и количество', async () => {
   const page = createPage();

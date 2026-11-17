@@ -61,7 +61,7 @@ function renderDishes(dishes) {
     return;
   }
 
-  const cart = JSON.parse(localStorage.getItem('cart')) || [];
+  const cart = getCart();
 
   dishes.forEach(dish => {
     const el = document.createElement('div');
@@ -124,7 +124,7 @@ function escapeHtml(str) {
 }
 
 function updateQuantity(dish, delta) {
-  let cart = JSON.parse(localStorage.getItem('cart')) || [];
+  let cart = getCart();
   const existing = cart.find(item => item.dishId === dish.id);
 
   if (existing) {
@@ -141,7 +141,7 @@ function updateQuantity(dish, delta) {
     });
   }
 
-  localStorage.setItem('cart', JSON.stringify(cart));
+  saveCart(cart);
 
   if (delta > 0 && !existing) {
     showNotice('Добавлено в корзину', 'success');

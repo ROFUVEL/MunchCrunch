@@ -107,14 +107,6 @@ async function loadSelectedBranch() {
   }
 }
 
-function getCart() {
-  return JSON.parse(localStorage.getItem('cart')) || [];
-}
-
-function saveCart(cart) {
-  localStorage.setItem('cart', JSON.stringify(cart));
-}
-
 function renderCart() {
   const cart = getCart();
   const cartDiv = document.getElementById('cart');
