@@ -15,10 +15,10 @@ async function loadProfile() {
     const user = await res.json();
     renderProfile(user);
   } catch (e) {
-    renderProfile({
-      id: userId,
-      phone: localStorage.getItem('userPhone') || 'Не указан'
-    });
+    const container = document.getElementById('profile');
+    if (container) {
+      container.innerHTML = '<div class="card" role="alert">Не удалось загрузить профиль. Попробуйте обновить страницу.</div>';
+    }
   }
 }
 
